@@ -1,4 +1,4 @@
 package com.unrn.gpiv.service;
 
-public class unaclasejava {
+public class evaluarSolicitud {
 }

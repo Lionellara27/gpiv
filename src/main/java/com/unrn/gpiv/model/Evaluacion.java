@@ -1,4 +1,4 @@
 package com.unrn.gpiv.model;
 
-public class unaclasejava {
+public class Evaluacion {
 }
