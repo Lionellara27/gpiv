@@ -32,3 +32,15 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Vaadin
+frontend/generated/
+frontend/.vite/
+frontend/node_modules/
+
+# Archivos generados Vaadin / build frontend
+vite.generated.ts
+vite.config.ts.timestamp*
+
+# Logs y temporales
+*.log
