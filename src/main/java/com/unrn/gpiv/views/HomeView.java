@@ -11,7 +11,8 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 
-@Route("")
+//s@Route("")
+@Route(value = "", layout = MainLayout.class) // Esto le dice que use el marco
 public class HomeView extends VerticalLayout {
 
     public HomeView() {
