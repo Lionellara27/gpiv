@@ -1,6 +1,7 @@
 package com.unrn.gpiv.views;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Image;
@@ -11,8 +12,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 
-//s@Route("")
-@Route(value = "", layout = MainLayout.class) // Esto le dice que use el marco
+@Route(value = "", layout = MainLayout.class) // Usa el marco principal
 public class HomeView extends VerticalLayout {
 
     public HomeView() {
@@ -30,7 +30,7 @@ public class HomeView extends VerticalLayout {
         header.setAlignItems(Alignment.CENTER);
 
         // Cargamos el logo (Asegurate de que esté en src/main/resources/META-INF/resources/images/)
-        Image logo = new Image("images/logo-parque.png", "Logo");
+        Image logo = new Image("images/logo-parque.png", "Logo del Parque Industrial");
         logo.setHeight("180px"); // Ajustá el tamaño a tu gusto
 
         // Franja decorativa de la bandera a la derecha del logo
@@ -48,7 +48,7 @@ public class HomeView extends VerticalLayout {
         mainContent.setJustifyContentMode(JustifyContentMode.CENTER);
         mainContent.setAlignItems(Alignment.CENTER);
 
-        // Título con el azul justicia
+        // Título con el azul justicia / negro
         H1 titulo = new H1("SGPIV");
         titulo.getStyle().set("font-size", "6em");
         titulo.getStyle().set("font-weight", "900");
@@ -65,20 +65,39 @@ public class HomeView extends VerticalLayout {
         desc.getStyle().set("color", "#666");
         desc.getStyle().set("margin-top", "1em");
 
-        // Botón con el Verde Producción
-        Button btnEntrar = new Button("INGRESAR AL SISTEMA", e -> {
-            // Próximamente navegación
-        });
-        btnEntrar.getStyle().set("background-color", "#009A3B"); // Verde bandera
-        btnEntrar.getStyle().set("color", "white");
-        btnEntrar.getStyle().set("padding", "1.2em 2.5em");
-        btnEntrar.getStyle().set("font-weight", "bold");
-        btnEntrar.getStyle().set("border-radius", "50px"); // Redondeado fachero
-        btnEntrar.getStyle().set("box-shadow", "0 4px 15px rgba(0, 154, 59, 0.3)");
-        btnEntrar.getStyle().set("cursor", "pointer");
-        btnEntrar.getStyle().set("margin-top", "2em");
+        // --- SECCIÓN DE BOTONES ---
+        HorizontalLayout botonera = new HorizontalLayout();
+        botonera.getStyle().set("margin-top", "2em");
+        botonera.setSpacing(true);
 
-        mainContent.add(titulo, subtitulo, desc, btnEntrar);
+        // Botón 1: Ingresar (Verde Producción)
+        Button btnEntrar = new Button("INGRESAR AL SISTEMA", e -> {
+            getUI().ifPresent(ui -> ui.navigate("login")); // Navegación real
+        });
+        btnEntrar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        btnEntrar.getStyle().set("background-color", "#009A3B"); // Tu verde
+        btnEntrar.getStyle().set("padding", "1.5em 2.5em");
+        btnEntrar.getStyle().set("font-weight", "bold");
+        btnEntrar.getStyle().set("border-radius", "50px");
+        btnEntrar.getStyle().set("box-shadow", "0 4px 15px rgba(0, 154, 59, 0.4)");
+        btnEntrar.getStyle().set("cursor", "pointer");
+
+        // Botón 2: Registrarse (Azul Bandera)
+        Button btnSolicitar = new Button("SOLICITAR LOTE (NUEVA EMPRESA)", e -> {
+            getUI().ifPresent(ui -> ui.navigate("registro")); // Navegación real
+        });
+        btnSolicitar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        btnSolicitar.getStyle().set("background-color", "#0063BE"); // Tu azul
+        btnSolicitar.getStyle().set("padding", "1.5em 2.5em");
+        btnSolicitar.getStyle().set("font-weight", "bold");
+        btnSolicitar.getStyle().set("border-radius", "50px");
+        btnSolicitar.getStyle().set("box-shadow", "0 4px 15px rgba(0, 99, 190, 0.4)");
+        btnSolicitar.getStyle().set("cursor", "pointer");
+
+        botonera.add(btnEntrar, btnSolicitar);
+
+        // Agregamos la botonera al mainContent
+        mainContent.add(titulo, subtitulo, desc, botonera);
 
         // --- 3. FOOTER ---
         Div footer = new Div();
