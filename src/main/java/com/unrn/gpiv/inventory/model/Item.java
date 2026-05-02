@@ -13,7 +13,7 @@ public class Item {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nombre; // Ejemplo: "Llave Lote 14", "Motosierra Stihl"
+    private String nombre; // Ejemplo: "Llave Lote 14", "Motosierra Stihl", "Materiales"
 
     private String descripcion;
 

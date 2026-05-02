@@ -1,47 +1,39 @@
 package com.unrn.gpiv.model;
 
+import com.unrn.gpiv.common.Rol; // Importamos tu Enum
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "representantes_empresa")
-public class RepresentanteEmpresa {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@DiscriminatorValue("REPRESENTANTE")
+public class RepresentanteEmpresa extends Usuario {
 
     private String nombreCompleto;
     private String dni;
-    private String cuitPersonal; // Su CUIL/CUIT personal (20-xxx, etc.)
+    private String cuitPersonal;
     private String telefono;
     private String emailContacto;
 
-    // Relación inversa para saber a qué empresa representa (opcional)
     @OneToOne(mappedBy = "representante")
     private Empresa empresa;
 
-    // Constructores
-    public RepresentanteEmpresa() {}
+    // EL CONSTRUCTOR CORREGIDO:
+    public RepresentanteEmpresa() {
+        // Usamos "EMPRESA" porque así se llama en tu Enum Rol.java
+        this.setRol(Rol.EMPRESA);
+    }
 
-    // Getters y Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
+    // --- GETTERS Y SETTERS ---
+    // (Los que ya tenías)
     public String getNombreCompleto() { return nombreCompleto; }
     public void setNombreCompleto(String nombre) { this.nombreCompleto = nombre; }
-
     public String getDni() { return dni; }
     public void setDni(String dni) { this.dni = dni; }
-
     public String getCuitPersonal() { return cuitPersonal; }
     public void setCuitPersonal(String cuit) { this.cuitPersonal = cuit; }
-
     public String getTelefono() { return telefono; }
     public void setTelefono(String tel) { this.telefono = tel; }
-
     public String getEmailContacto() { return emailContacto; }
     public void setEmailContacto(String email) { this.emailContacto = email; }
-
     public Empresa getEmpresa() { return empresa; }
     public void setEmpresa(Empresa empresa) { this.empresa = empresa; }
 }
