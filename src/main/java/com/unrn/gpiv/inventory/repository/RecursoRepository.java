@@ -8,8 +8,8 @@ import java.util.List;
 @Repository
 public interface RecursoRepository extends JpaRepository<Recurso, Long> {
 
-    // Para el buscador que pide la HU 19
-    List<Recurso> findByCategoriaContainingIgnoreCase(String categoria);
+    // MAGIA: Al poner "ItemCategoria", Spring busca adentro del Item asociado al Recurso
+    List<Recurso> findByItemCategoriaContainingIgnoreCase(String categoria);
 
     // Para ver qué herramientas están libres para prestar
     List<Recurso> findByDisponibleTrue();

@@ -22,6 +22,7 @@ public class Recurso {
     private String estadoConservacion; // "Nuevo", "Gastado", "Roto"
 
     private String numeroSerie; // Para diferenciar físicamente las unidades
+    private String categoria; // "Herramienta", "Maquinaria", etc.
 
     private boolean disponible = true;
 
@@ -40,6 +41,9 @@ public class Recurso {
     }
 
     // --- GETTERS Y SETTERS ---
+
+    public String getCategoria() { return categoria; }
+    public void setCategoria(String categoria) { this.categoria = categoria; }
 
     public Long getId() {
         return id;

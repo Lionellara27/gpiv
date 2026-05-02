@@ -1,10 +1,13 @@
 package com.unrn.gpiv.model;
 
-import com.unrn.gpiv.common.*; // Para traer los Enums
+import com.unrn.gpiv.common.*;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "proyectos_productivos")
+@Getter @Setter
 public class ProyectoProductivo {
 
     @Id
@@ -13,11 +16,10 @@ public class ProyectoProductivo {
 
     private String ingresoBruto;
 
-    @Column(nullable = false) // "rellenar siosi"
+    @Column(nullable = false)
     private String actividadPrincipal;
 
-    private String actividadSecundaria; // opcional
-
+    private String actividadSecundaria;
     private String rubro;
 
     @Column(columnDefinition = "TEXT")
@@ -27,28 +29,26 @@ public class ProyectoProductivo {
     private String destinoProduccion;
 
     @Enumerated(EnumType.STRING)
-    private Servicio servicio; // El que ya tenés en .common
+    private TipoServicio tipoServicio; // <--- USANDO TU ENUM EXISTENTE
 
     private String tipoResiduos;
 
     @Enumerated(EnumType.STRING)
-    private Emplazamiento emplazamientoActual; // (Propio, Alquilado)
+    private Emplazamiento emplazamientoActual;
 
     private String materiaPrima;
 
-    // --- PERSONAL OCUPADO (Categorías y Cantidades) ---
+    // Personal Ocupado
     private int cantJerarquico;
     private int cantProduccion;
     private int cantAdministrativo;
 
     @Enumerated(EnumType.STRING)
-    private TensionAlimentacion tensionAlimentacion; // (Media, Baja)
+    private TensionAlimentacion tensionAlimentacion;
 
     @OneToOne(mappedBy = "proyecto")
     private Empresa empresa;
 
-    public ProyectoProductivo() {}
-
-    // --- GETTERS Y SETTERS ---
-    // (Generalos todos con Alt+Insert en IntelliJ)
+    public ProyectoProductivo() {
+    }
 }

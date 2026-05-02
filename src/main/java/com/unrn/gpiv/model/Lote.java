@@ -2,6 +2,7 @@ package com.unrn.gpiv.model;
 
 import com.unrn.gpiv.common.EstadoLote;
 import jakarta.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name = "lotes")
@@ -9,51 +10,101 @@ public class Lote {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Usamos Long por estándar de JPA
+    private Long id;
 
     private String ubicacion;
 
     private Double superficie; // m2
 
-    // Lo que pediste como disponibilidad, lo manejamos con el Enum para más detalle
     @Enumerated(EnumType.STRING)
     private EstadoLote estado;
 
-    // Campo extra para cumplir con lo de 'disponibilidad' si querés un booleano simple
     private boolean disponibilidad;
 
     @Column(columnDefinition = "TEXT")
     private String caracteristica;
 
-    // Relación con la Empresa: Un lote puede tener una empresa radicada
+    // --- LA RELACIÓN QUE HACÍA FALTA ---
+    // El nombre 'servicios' tiene que coincidir con el mappedBy de la clase Servicio
+    @ManyToMany
+    @JoinTable(
+            name = "lote_servicio",
+            joinColumns = @JoinColumn(name = "lote_id"),
+            inverseJoinColumns = @JoinColumn(name = "servicio_id")
+    )
+    private List<Servicio> servicios;
+
     @OneToOne
     @JoinColumn(name = "empresa_id")
     private Empresa empresa;
 
-    // Constructor vacío
+    // Constructor vacío (obligatorio)
     public Lote() {
     }
 
     // --- GETTERS Y SETTERS ---
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getUbicacion() { return ubicacion; }
-    public void setUbicacion(String ubicacion) { this.ubicacion = ubicacion; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public Double getSuperficie() { return superficie; }
-    public void setSuperficie(Double superficie) { this.superficie = superficie; }
+    public String getUbicacion() {
+        return ubicacion;
+    }
 
-    public EstadoLote getEstado() { return estado; }
-    public void setEstado(EstadoLote estado) { this.estado = estado; }
+    public void setUbicacion(String ubicacion) {
+        this.ubicacion = ubicacion;
+    }
 
-    public boolean isDisponibilidad() { return disponibilidad; }
-    public void setDisponibilidad(boolean disponibilidad) { this.disponibilidad = disponibilidad; }
+    public Double getSuperficie() {
+        return superficie;
+    }
 
-    public String getCaracteristica() { return caracteristica; }
-    public void setCaracteristica(String caracteristica) { this.caracteristica = caracteristica; }
+    public void setSuperficie(Double superficie) {
+        this.superficie = superficie;
+    }
 
-    public Empresa getEmpresa() { return empresa; }
-    public void setEmpresa(Empresa empresa) { this.empresa = empresa; }
+    public EstadoLote getEstado() {
+        return estado;
+    }
+
+    public void setEstado(EstadoLote estado) {
+        this.estado = estado;
+    }
+
+    public boolean isDisponibilidad() {
+        return disponibilidad;
+    }
+
+    public void setDisponibilidad(boolean disponibilidad) {
+        this.disponibilidad = disponibilidad;
+    }
+
+    public String getCaracteristica() {
+        return caracteristica;
+    }
+
+    public void setCaracteristica(String caracteristica) {
+        this.caracteristica = caracteristica;
+    }
+
+    public List<Servicio> getServicios() {
+        return servicios;
+    }
+
+    public void setServicios(List<Servicio> servicios) {
+        this.servicios = servicios;
+    }
+
+    public Empresa getEmpresa() {
+        return empresa;
+    }
+
+    public void setEmpresa(Empresa empresa) {
+        this.empresa = empresa;
+    }
 }

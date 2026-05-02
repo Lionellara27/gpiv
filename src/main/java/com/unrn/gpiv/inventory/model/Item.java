@@ -1,8 +1,6 @@
 package com.unrn.gpiv.inventory.model;
 
-import com.unrn.gpiv.model.Empresa;
 import jakarta.persistence.*;
-
 import java.util.List;
 
 @Entity
@@ -13,42 +11,60 @@ public class Item {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nombre; // Ejemplo: "Llave Lote 14", "Motosierra Stihl", "Materiales"
+    private String nombre; // Ej: "Motosierra Stihl", "Taladro Bosch"
 
-    private String descripcion;
+    private String descripcion; // "Herramienta de corte a explosión..."
 
-    private String numeroSerie; // Clave para no perder cosas
+    // ¡ESTA ES LA VARIABLE MÁGICA PARA EL BUSCADOR!
+    private String categoria; // Ej: "Herramienta", "Maquinaria pesada", "Acceso"
 
-    private boolean disponible = true;
-
-        // Relación: Un item puede estar prestado a una empresa (HU 18)
-       // @ManyToOne
-        //@JoinColumn(name = "empresa_id")
-        //private Empresa prestadoA;
-
+    // Relación: Un "molde" del catálogo tiene muchas herramientas físicas reales
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)
     private List<Recurso> existencias;
 
+    // Constructor vacío obligatorio
     public Item() {
     }
 
     // --- GETTERS Y SETTERS ---
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getDescripcion() { return descripcion; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+    public String getNombre() {
+        return nombre;
+    }
 
-    public String getNumeroSerie() { return numeroSerie; }
-    public void setNumeroSerie(String numeroSerie) { this.numeroSerie = numeroSerie; }
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
 
-    public boolean isDisponible() { return disponible; }
-    public void setDisponible(boolean disponible) { this.disponible = disponible; }
+    public String getDescripcion() {
+        return descripcion;
+    }
 
-   // public Empresa getPrestadoA() { return prestadoA; }
-    //public void setPrestadoA(Empresa prestadoA) { this.prestadoA = prestadoA; }
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public String getCategoria() {
+        return categoria;
+    }
+
+    public void setCategoria(String categoria) {
+        this.categoria = categoria;
+    }
+
+    public List<Recurso> getExistencias() {
+        return existencias;
+    }
+
+    public void setExistencias(List<Recurso> existencias) {
+        this.existencias = existencias;
+    }
 }
