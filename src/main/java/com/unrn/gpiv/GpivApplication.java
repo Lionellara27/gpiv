@@ -1,4 +1,4 @@
-package com.unrn.gpiv;
+package com.unrn.gpiv; //
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -9,5 +9,4 @@ public class GpivApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(GpivApplication.class, args);
 	}
-
 }
