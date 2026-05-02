@@ -1,46 +1,93 @@
 package com.unrn.gpiv.inventory.model;
 
-import com.unrn.gpiv.model.Empresa; // Relación con el core
+import com.unrn.gpiv.model.Empresa;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "inventario_recursos")
+@Table(name = "recursos_fisicos")
 public class Recurso {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String nombre;
+    // Relación con el "molde": Muchos recursos pueden ser del mismo Item (ej: muchas hachas)
+    @ManyToOne
+    @JoinColumn(name = "item_id")
+    private Item item;
 
-    private String descripcion;
+    private String propietario; // "Pepe", "Alberto", "Administración"
 
-    private String categoria; // Ejemplo: "Herramienta", "Maquinaria", "Llave"
+    private String estadoConservacion; // "Nuevo", "Gastado", "Roto"
 
-    private String estadoConservacion; // Ejemplo: "Nuevo", "Dañado", "En Reparación"
+    private String numeroSerie; // Para diferenciar físicamente la de Pepe de la de Alberto
 
     private boolean disponible = true;
 
-    // Relación: Un recurso puede estar prestado a una empresa (HU 18)
+    // Relación con Empresa: A quién se lo prestamos (HU 18)
     @ManyToOne
     @JoinColumn(name = "empresa_id")
     private Empresa prestadoA;
 
-    public Recurso() {}
+    // Constructor vacío (obligatorio para JPA)
+    public Recurso() {
+    }
 
-    // Getters y Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
-    public String getDescripcion() { return descripcion; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
-    public String getCategoria() { return categoria; }
-    public void setCategoria(String categoria) { this.categoria = categoria; }
-    public String getEstadoConservacion() { return estadoConservacion; }
-    public void setEstadoConservacion(String estado) { this.estadoConservacion = estado; }
-    public boolean isDisponible() { return disponible; }
-    public void setDisponible(boolean disponible) { this.disponible = disponible; }
-    public Empresa getPrestadoA() { return prestadoA; }
-    public void setPrestadoA(Empresa prestadoA) { this.prestadoA = prestadoA; }
+    // --- GETTERS Y SETTERS ---
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Item getItem() {
+        return item;
+    }
+
+    public void setItem(Item item) {
+        this.item = item;
+    }
+
+    public String getPropietario() {
+        return propietario;
+    }
+
+    public void setPropietario(String propietario) {
+        this.propietario = propietario;
+    }
+
+    public String getEstadoConservacion() {
+        return estadoConservacion;
+    }
+
+    public void setEstadoConservacion(String estadoConservacion) {
+        this.estadoConservacion = estadoConservacion;
+    }
+
+    public String getNumeroSerie() {
+        return numeroSerie;
+    }
+
+    public void setNumeroSerie(String numeroSerie) {
+        this.numeroSerie = numeroSerie;
+    }
+
+    public boolean isDisponible() {
+        return disponible;
+    }
+
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
+    }
+
+    public Empresa getPrestadoA() {
+        return prestadoA;
+    }
+
+    public void setPrestadoA(Empresa prestadoA) {
+        this.prestadoA = prestadoA;
+    }
 }
