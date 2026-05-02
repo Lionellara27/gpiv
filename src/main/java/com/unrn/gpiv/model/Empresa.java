@@ -28,7 +28,7 @@ public class Empresa {
     private RepresentanteEmpresa representante;
 
     @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<InformeDeAvance> informesDeAvance = new ArrayList<>();
+    private List<InformeAvance> informesDeAvance = new ArrayList<>();
 
     // Constructores
     public Empresa() {}
@@ -55,6 +55,6 @@ public class Empresa {
     public RepresentanteEmpresa getRepresentante() { return representante; }
     public void setRepresentante(RepresentanteEmpresa representante) { this.representante = representante; }
 
-    public List<InformeDeAvance> getInformesDeAvance() { return informesDeAvance; }
-    public void setInformesDeAvance(List<InformeDeAvance> informes) { this.informesDeAvance = informes; }
+    public List<InformeAvance> getInformesDeAvance() { return informesDeAvance; }
+    public void setInformesDeAvance(List<InformeAvance> informes) { this.informesDeAvance = informes; }
 }
