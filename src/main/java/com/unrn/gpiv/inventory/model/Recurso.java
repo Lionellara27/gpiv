@@ -11,25 +11,31 @@ public class Recurso {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Relación con el "molde": Muchos recursos pueden ser del mismo Item (ej: muchas hachas)
+    // Relación con el "molde" del catálogo (Ej: Hacha, Motosierra)
     @ManyToOne
     @JoinColumn(name = "item_id")
     private Item item;
 
-    private String propietario; // "Pepe", "Alberto", "Administración"
+    // Nombre del propietario (Útil para poner "Administración" o nombres genéricos)
+    private String propietario;
 
     private String estadoConservacion; // "Nuevo", "Gastado", "Roto"
 
-    private String numeroSerie; // Para diferenciar físicamente la de Pepe de la de Alberto
+    private String numeroSerie; // Para diferenciar físicamente las unidades
 
     private boolean disponible = true;
 
-    // Relación con Empresa: A quién se lo prestamos (HU 18)
+    // CASO A: A qué empresa le prestamos el recurso hoy
     @ManyToOne
-    @JoinColumn(name = "empresa_id")
+    @JoinColumn(name = "empresa_prestamo_id")
     private Empresa prestadoA;
 
-    // Constructor vacío (obligatorio para JPA)
+    // CASO B: Si el dueño del recurso es una Empresa y no el Parque
+    @ManyToOne
+    @JoinColumn(name = "empresa_propietaria_id")
+    private Empresa propietarioEmpresa;
+
+    // Constructor vacío obligatorio para JPA
     public Recurso() {
     }
 
@@ -89,5 +95,13 @@ public class Recurso {
 
     public void setPrestadoA(Empresa prestadoA) {
         this.prestadoA = prestadoA;
+    }
+
+    public Empresa getPropietarioEmpresa() {
+        return propietarioEmpresa;
+    }
+
+    public void setPropietarioEmpresa(Empresa propietarioEmpresa) {
+        this.propietarioEmpresa = propietarioEmpresa;
     }
 }

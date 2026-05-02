@@ -22,9 +22,9 @@ public class Item {
     private boolean disponible = true;
 
         // Relación: Un item puede estar prestado a una empresa (HU 18)
-        @ManyToOne
-        @JoinColumn(name = "empresa_id")
-        private Empresa prestadoA;
+       // @ManyToOne
+        //@JoinColumn(name = "empresa_id")
+        //private Empresa prestadoA;
 
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)
     private List<Recurso> existencias;
@@ -49,6 +49,6 @@ public class Item {
     public boolean isDisponible() { return disponible; }
     public void setDisponible(boolean disponible) { this.disponible = disponible; }
 
-    public Empresa getPrestadoA() { return prestadoA; }
-    public void setPrestadoA(Empresa prestadoA) { this.prestadoA = prestadoA; }
+   // public Empresa getPrestadoA() { return prestadoA; }
+    //public void setPrestadoA(Empresa prestadoA) { this.prestadoA = prestadoA; }
 }

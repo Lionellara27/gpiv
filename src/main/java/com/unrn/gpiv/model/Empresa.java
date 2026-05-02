@@ -1,5 +1,6 @@
 package com.unrn.gpiv.model;
 
+import com.unrn.gpiv.inventory.model.Recurso; // Importamos la clase del otro módulo
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,11 +14,11 @@ public class Empresa {
     private Long id;
 
     private String razonSocial;
-    private String cuit; // CUIT de la entidad (30-xxx, etc.)
+    private String cuit;
     private String direccion;
-    private boolean titulada; // HU 11: Si ya tiene escritura/título
+    private boolean titulada;
 
-    // RELACIONES
+    // --- RELACIONES CORE ---
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "proyecto_id", referencedColumnName = "id")
@@ -30,10 +31,21 @@ public class Empresa {
     @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InformeAvance> informesDeAvance = new ArrayList<>();
 
+    // --- RELACIONES DE INVENTARIO (Lo nuevo para el Gerente) ---
+
+    // Las herramientas que el Parque le prestó a esta empresa hoy
+    @OneToMany(mappedBy = "prestadoA")
+    private List<Recurso> herramientasPrestadas = new ArrayList<>();
+
+    // Las herramientas que son propiedad de esta empresa (como el tractor del Lote 1)
+    @OneToMany(mappedBy = "propietarioEmpresa")
+    private List<Recurso> herramientasAportadas = new ArrayList<>();
+
     // Constructores
     public Empresa() {}
 
-    // Getters y Setters
+    // --- GETTERS Y SETTERS ---
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -57,4 +69,11 @@ public class Empresa {
 
     public List<InformeAvance> getInformesDeAvance() { return informesDeAvance; }
     public void setInformesDeAvance(List<InformeAvance> informes) { this.informesDeAvance = informes; }
+
+    // Getters y Setters del Inventario
+    public List<Recurso> getHerramientasPrestadas() { return herramientasPrestadas; }
+    public void setHerramientasPrestadas(List<Recurso> lista) { this.herramientasPrestadas = lista; }
+
+    public List<Recurso> getHerramientasAportadas() { return herramientasAportadas; }
+    public void setHerramientasAportadas(List<Recurso> lista) { this.herramientasAportadas = lista; }
 }
