@@ -60,8 +60,24 @@ public class LoginView extends VerticalLayout {
         btnIngresar.getStyle().set("background-color", "#009A3B");
         btnIngresar.getStyle().set("font-weight", "bold");
         btnIngresar.getStyle().set("margin-top", "1.5em");
+
+        //logica mini sumilada para el btn ingreso
         btnIngresar.addClickListener(e -> {
-            // Próximamente: Lógica de ingreso
+            String usuario = txtUsuario.getValue().trim().toLowerCase();
+
+            if (usuario.equals("empresa")) {
+                // --- GUARDAMOS EL ROL EN LA SESIÓN ---
+                com.vaadin.flow.server.VaadinSession.getCurrent().setAttribute("rol", "EMPRESA");
+                getUI().ifPresent(ui -> ui.navigate("mi-proyecto"));
+
+            } else if (usuario.equals("admin")) {
+                // --- GUARDAMOS EL ROL EN LA SESIÓN ---
+                com.vaadin.flow.server.VaadinSession.getCurrent().setAttribute("rol", "ADMIN");
+                getUI().ifPresent(ui -> ui.navigate("admin/dashboard"));
+
+            } else {
+                com.vaadin.flow.component.notification.Notification.show("Usuario incorrecto");
+            }
         });
 
         // --- SECCIÓN DE LINKS INFERIORES ---
