@@ -12,7 +12,8 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 
-@Route(value = "", layout = MainLayout.class) // Usa el marco principal
+// ¡Ruta vacía y SIN layout! 100% independiente
+@Route("")
 public class HomeView extends VerticalLayout {
 
     public HomeView() {
@@ -22,18 +23,16 @@ public class HomeView extends VerticalLayout {
         setSpacing(false);
         getStyle().set("background-color", "#FFFFFF");
 
-        // --- 1. HEADER CON LOGO (Esquina superior) ---
+        // --- 1. HEADER INTEGRADO DIRECTAMENTE EN LA VISTA ---
         HorizontalLayout header = new HorizontalLayout();
         header.setWidthFull();
         header.setPadding(true);
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         header.setAlignItems(Alignment.CENTER);
 
-        // Cargamos el logo (Asegurate de que esté en src/main/resources/META-INF/resources/images/)
         Image logo = new Image("images/logo-parque.png", "Logo del Parque Industrial");
-        logo.setHeight("180px"); // Ajustá el tamaño a tu gusto
+        logo.setHeight("180px"); // Logo grande de presentación
 
-        // Franja decorativa de la bandera a la derecha del logo
         Div lineasBandera = new Div();
         lineasBandera.setWidth("150px");
         lineasBandera.setHeight("5px");
@@ -48,17 +47,16 @@ public class HomeView extends VerticalLayout {
         mainContent.setJustifyContentMode(JustifyContentMode.CENTER);
         mainContent.setAlignItems(Alignment.CENTER);
 
-        // Título con el azul justicia / negro
         H1 titulo = new H1("SGPIV");
         titulo.getStyle().set("font-size", "6em");
         titulo.getStyle().set("font-weight", "900");
-        titulo.getStyle().set("color", "#000000"); // Negro río
+        titulo.getStyle().set("color", "#000000");
         titulo.getStyle().set("margin", "0");
 
         Span subtitulo = new Span("Sistema de Gestión del Parque Industrial de Viedma");
         subtitulo.getStyle().set("font-size", "1.5em");
         subtitulo.getStyle().set("letter-spacing", "5px");
-        subtitulo.getStyle().set("color", "#0063BE"); // Azul bandera
+        subtitulo.getStyle().set("color", "#0063BE");
         subtitulo.getStyle().set("font-weight", "bold");
 
         Paragraph desc = new Paragraph("Parque Industrial de Viedma - Motor Productivo de la Comarca");
@@ -70,24 +68,22 @@ public class HomeView extends VerticalLayout {
         botonera.getStyle().set("margin-top", "2em");
         botonera.setSpacing(true);
 
-        // Botón 1: Ingresar (Verde Producción)
         Button btnEntrar = new Button("INGRESAR AL SISTEMA", e -> {
-            getUI().ifPresent(ui -> ui.navigate("login")); // Navegación real
+            getUI().ifPresent(ui -> ui.navigate("login"));
         });
         btnEntrar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        btnEntrar.getStyle().set("background-color", "#009A3B"); // Tu verde
+        btnEntrar.getStyle().set("background-color", "#009A3B");
         btnEntrar.getStyle().set("padding", "1.5em 2.5em");
         btnEntrar.getStyle().set("font-weight", "bold");
         btnEntrar.getStyle().set("border-radius", "50px");
         btnEntrar.getStyle().set("box-shadow", "0 4px 15px rgba(0, 154, 59, 0.4)");
         btnEntrar.getStyle().set("cursor", "pointer");
 
-        // Botón 2: Registrarse (Azul Bandera)
         Button btnSolicitar = new Button("SOLICITAR LOTE (NUEVA EMPRESA)", e -> {
-            getUI().ifPresent(ui -> ui.navigate("registro")); // Navegación real
+            getUI().ifPresent(ui -> ui.navigate("registro"));
         });
         btnSolicitar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        btnSolicitar.getStyle().set("background-color", "#0063BE"); // Tu azul
+        btnSolicitar.getStyle().set("background-color", "#0063BE");
         btnSolicitar.getStyle().set("padding", "1.5em 2.5em");
         btnSolicitar.getStyle().set("font-weight", "bold");
         btnSolicitar.getStyle().set("border-radius", "50px");
@@ -95,62 +91,15 @@ public class HomeView extends VerticalLayout {
         btnSolicitar.getStyle().set("cursor", "pointer");
 
         botonera.add(btnEntrar, btnSolicitar);
-
-        // Agregamos la botonera al mainContent
         mainContent.add(titulo, subtitulo, desc, botonera);
 
         // --- 3. FOOTER ---
         Div footer = new Div();
         footer.setWidthFull();
         footer.setHeight("10px");
-        footer.getStyle().set("background-color", "#000000"); // Negro del río
+        footer.getStyle().set("background-color", "#000000");
 
+        // Sumamos TODO a la pantalla (incluido el header con el logo)
         add(header, mainContent, footer);
     }
 }
-
-/*package com.unrn.gpiv.views;
-
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.Route;
-
-/**
- * Esta es la página principal del sistema (Ruta vacía "")
- */
-/*
-@Route("")
-public class HomeView extends VerticalLayout {
-
-    public HomeView() {
-        // 1. Configuración básica del layout (centrado como en JavaFX)
-        setSpacing(true);
-        setAlignItems(Alignment.CENTER);
-        setJustifyContentMode(JustifyContentMode.CENTER);
-        setSizeFull(); // Que ocupe toda la pantalla
-
-        // 2. Título principal
-        H1 titulo = new H1("Bienvenido al SGPIV");
-        titulo.getStyle().set("color", "#00468b"); // Azul institucional
-
-        // 3. Bajada de texto
-        Paragraph descripcion = new Paragraph(
-                "Sistema de Gestión del Parque Industrial de Viedma. " +
-                        "Centralizando la información para una mejor trazabilidad.");
-
-        // 4. Un botón de acción (similar a un EventHandler en JavaFX)
-        Button btnEmpezar = new Button("Explorar Lotes", e -> {
-            Notification.show("¡Próximamente: Listado de Lotes!");
-        });
-
-        // Estilo al botón para que se vea moderno (Lumo theme)
-        btnEmpezar.getElement().setAttribute("theme", "primary");
-
-        // 5. Agregamos todo al "Stage" (Layout principal)
-        add(titulo, descripcion, btnEmpezar);
-    }
-}*/
