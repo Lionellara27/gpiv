@@ -19,33 +19,39 @@ public class HomeView extends VerticalLayout {
 		setSizeFull();
 		setPadding(false);
 		setSpacing(false);
-		getStyle().set("background-color", "#F1E6D2"); // El beige de fondo
+		getStyle().set("background-color", "#f1e1bc"); // El beige de fondo
 		getStyle().set("font-family", "Montserrat, sans-serif");
 
 		// --- HEADER (Franja Verde Superior) ---
 		HorizontalLayout header = new HorizontalLayout();
 		header.setWidthFull();
 		header.setHeight("80px");
-		header.getStyle().set("background-color", "#1F3E2F"); // Verde Musgo
+		header.getStyle().set("background-color", "#448351"); // Verde Musgo
 		header.setPadding(true);
 		header.setAlignItems(Alignment.CENTER);
 		header.setJustifyContentMode(JustifyContentMode.BETWEEN);
 
+		// NUEVO: Sub-contenedor para Logo + Texto (Pegados a la izquierda)
+		HorizontalLayout contenedorIzquierdo = new HorizontalLayout();
+		contenedorIzquierdo.setAlignItems(Alignment.CENTER);
+		contenedorIzquierdo.setSpacing(true); // Espacio pequeño entre logo y texto
+
 		// Logo Izquierdo
         Image logoImg = new Image("images/enrepavi.png", "Logo ENREPAVI");
-        logoImg.setHeight("60px");
-        header.add(logoImg);
+        logoImg.setHeight("80px");
+        contenedorIzquierdo.add(logoImg);
 
 		Span tituloHeader = new Span("Ente para la Reconversión del Parque Industrial de Viedma");
 		tituloHeader.getStyle().set("color", "white");
-		tituloHeader.getStyle().set("font-weight", "bold");
+		tituloHeader.getStyle().set("font-size", "20px");
+		contenedorIzquierdo.add(tituloHeader);
 
 		// Bandera/Imagen Derecha
 		Image banderaImg = new Image("images/bandera-RioNegro.jpg", "Bandera");
 		banderaImg.setHeight("50px");
 		header.add(banderaImg);
 
-		header.add(logoImg, tituloHeader, banderaImg);
+		header.add(contenedorIzquierdo, banderaImg);
 
 
 		// --- BODY (Contenido Central) ---
@@ -56,12 +62,12 @@ public class HomeView extends VerticalLayout {
 
 		H1 logoPrincipal = new H1("SGPIV");
 		logoPrincipal.getStyle().set("font-size", "120px");
-		logoPrincipal.getStyle().set("color", "#1F3E2F");
+		logoPrincipal.getStyle().set("color", "#000000");
 		logoPrincipal.getStyle().set("margin", "0");
 
-		Span subtitulo = new Span("Sistema de Gestión de Proyectos");
-		subtitulo.getStyle().set("font-size", "20px");
-		subtitulo.getStyle().set("color", "#1F3E2F");
+		Span subtitulo = new Span("Sistema de Gestión del Parque Industrial de Viedma");
+		subtitulo.getStyle().set("font-size", "25px");
+		subtitulo.getStyle().set("color", "#000000");
 		subtitulo.getStyle().set("margin-bottom", "40px");
 
 		// Contenedor de Botones
@@ -71,8 +77,13 @@ public class HomeView extends VerticalLayout {
 		Button btnIngresar = crearBotonEstilizado("INGRESAR");
 		Button btnPresentar = crearBotonEstilizado("PRESENTAR PROYECTO");
 
-		// Aquí podés agregar la navegación luego
+		//agregar la navegación luego
 		// btnIngresar.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("login")));
+
+		btnPresentar.addClickListener(event -> {
+			// Esto abre el link en una pestaña nueva ("_blank")
+			getUI().ifPresent(ui -> ui.getPage().open("https://docs.google.com/forms/d/e/1FAIpQLSc36TWzWPMdNUuBeeMMGEkBVaCDdwOjJn7Y3yhcGz-zXusCng/viewform", "_blank"));
+		});
 
 		layoutBotones.add(btnIngresar, btnPresentar);
 		body.add(logoPrincipal, subtitulo, layoutBotones);
@@ -82,12 +93,12 @@ public class HomeView extends VerticalLayout {
 		HorizontalLayout footer = new HorizontalLayout();
 		footer.setWidthFull();
 		footer.setHeight("60px");
-		footer.getStyle().set("background-color", "#1F3E2F");
+		footer.getStyle().set("background-color", "#448351");
 		footer.setJustifyContentMode(JustifyContentMode.BETWEEN);
 		footer.setAlignItems(Alignment.CENTER);
 		footer.setPadding(true);
 		footer.getStyle().set("color", "white");
-		footer.getStyle().set("font-size", "14px");
+		footer.getStyle().set("font-size", "20px");
 
 		footer.add(new Span("Ruta 1 km 6.5"));
 		footer.add(new Span("entrepavi@gmail.com"));
@@ -102,9 +113,9 @@ public class HomeView extends VerticalLayout {
 	// Método auxiliar para no repetir código de botones
 	private Button crearBotonEstilizado(String texto) {
 		Button btn = new Button(texto);
-		btn.getStyle().set("background-color", "#1F3E2F");
+		btn.getStyle().set("background-color", "#448351");
 		btn.getStyle().set("color", "white");
-		btn.getStyle().set("border-radius", "25px"); // Los hace ovalados
+		btn.getStyle().set("border-radius", "15px"); // Los hace ovalados
 		btn.getStyle().set("padding", "25px 40px");
 		btn.getStyle().set("font-weight", "bold");
 		btn.getStyle().set("cursor", "pointer");
