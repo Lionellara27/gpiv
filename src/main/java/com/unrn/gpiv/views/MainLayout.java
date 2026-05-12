@@ -1,13 +1,12 @@
 package com.unrn.gpiv.views;
 
-import com.unrn.gpiv.views.admin.AdminDashboardView;
-import com.unrn.gpiv.views.admin.AdminLotesView;
-import com.unrn.gpiv.views.admin.InformesEmpresasView;
-import com.unrn.gpiv.views.admin.InventarioView;
+import com.unrn.gpiv.common.Rol;
+import com.unrn.gpiv.model.Usuario;
+import com.unrn.gpiv.views.admin.*;
 import com.unrn.gpiv.views.empresa.MiProyectoView;
-import com.unrn.gpiv.views.evaluadores.EvaluarSolicitudesView;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -15,6 +14,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.RouterLink;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 public class MainLayout extends AppLayout {
@@ -26,16 +26,18 @@ public class MainLayout extends AppLayout {
 
     private void createHeader() {
         H1 logo = new H1("SGPIV - Viedma");
-        logo.addClassNames(
-                LumoUtility.FontSize.LARGE,
-                LumoUtility.Margin.MEDIUM,
-                LumoUtility.TextColor.PRIMARY
-        );
+        logo.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.MEDIUM, LumoUtility.TextColor.PRIMARY);
 
-        // El Toggle es el botoncito de "hamburguesa" para abrir/cerrar el menú
         DrawerToggle toggle = new DrawerToggle();
 
-        var header = new HorizontalLayout(toggle, logo);
+        // Botón de salir (Opcional, pero muy útil)
+        Button btnLogout = new Button("Salir", VaadinIcon.SIGN_OUT.create(), e -> {
+            VaadinSession.getCurrent().getSession().invalidate();
+            getUI().ifPresent(ui -> ui.navigate("login"));
+        });
+        btnLogout.addClassNames(LumoUtility.Margin.Left.AUTO, LumoUtility.Margin.Right.MEDIUM);
+
+        var header = new HorizontalLayout(toggle, logo, btnLogout);
         header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         header.setWidthFull();
         header.addClassNames(LumoUtility.Padding.Vertical.NONE, LumoUtility.Padding.Horizontal.MEDIUM);
@@ -46,59 +48,45 @@ public class MainLayout extends AppLayout {
     private void createDrawer() {
         VerticalLayout menu = new VerticalLayout();
 
-        // LEEMOS EL ROL DE LA SESIÓN
-        String rol = (String) com.vaadin.flow.server.VaadinSession.getCurrent().getAttribute("rol");
+        // --- EL CAMBIO CLAVE: LEEMOS EL OBJETO USUARIO ---
+        Usuario usuario = (Usuario) VaadinSession.getCurrent().getAttribute("usuarioLogueado");
 
-        // --- SI ES ADMIN, MOSTRAMOS SU SECCIÓN ---
-        if ("ADMIN".equals(rol)) {
+        if (usuario == null) return; // Si no hay nadie, no mostramos nada
+
+        // --- SI ES ADMIN ---
+        if (usuario.getRol() == Rol.ADMIN) {
             Span adminSection = new Span("ADMINISTRACIÓN");
             adminSection.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Top.MEDIUM);
 
-            RouterLink adminDashboard = new RouterLink();
-            adminDashboard.setRoute(AdminDashboardView.class);
-            adminDashboard.add(VaadinIcon.CHART_LINE.create(), new Span(" Dashboard"));
-            adminDashboard.addClassNames(LumoUtility.Display.FLEX, LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL);
-
-            RouterLink adminLotes = new RouterLink();
-            adminLotes.setRoute(AdminLotesView.class);
-            adminLotes.add(VaadinIcon.MAP_MARKER.create(), new Span(" Gestión de Lotes"));
-            adminLotes.addClassNames(LumoUtility.Display.FLEX, LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL);
-
-            RouterLink adminInformes = new RouterLink();
-            adminInformes.setRoute(InformesEmpresasView.class);
-            adminInformes.add(VaadinIcon.CHART_3D.create(), new Span(" Informe de Empresas"));
-            adminInformes.addClassNames(LumoUtility.Display.FLEX, LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL);
-
-            RouterLink evaluar = new RouterLink();
-            evaluar.setRoute(EvaluarSolicitudesView.class);
-            evaluar.add(VaadinIcon.CHECK_SQUARE_O.create(), new Span(" Evaluar Solicitudes"));
-            evaluar.addClassNames(LumoUtility.Display.FLEX, LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL);
-
-            RouterLink adminInventario = new RouterLink();
-            adminInventario.setRoute(InventarioView.class);
-            adminInventario.add(VaadinIcon.TOOLS.create(), new Span(" Gestión de Inventario"));
-            adminInventario.addClassNames(LumoUtility.Display.FLEX, LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL);
-
-            menu.add(adminSection, adminDashboard, adminLotes, adminInformes, evaluar, adminInventario);
+            menu.add(adminSection);
+            menu.add(crearLink(AdminDashboardView.class, VaadinIcon.CHART_LINE, " Dashboard"));
+            menu.add(crearLink(AdminLotesView.class, VaadinIcon.MAP_MARKER, " Gestión de Lotes"));
+            menu.add(crearLink(InformesEmpresasView.class, VaadinIcon.CHART_3D, " Informe de Empresas"));
+            menu.add(crearLink(EvaluarSolicitudesView.class, VaadinIcon.CHECK_SQUARE_O, " Evaluar Solicitudes"));
+            menu.add(crearLink(InventarioView.class, VaadinIcon.TOOLS, " Gestión de Inventario"));
         }
 
-        // --- SI ES EMPRESA, MOSTRAMOS SU SECCIÓN ---
-        if ("EMPRESA".equals(rol)) {
+        // --- SI ES EMPRESA ---
+        if (usuario.getRol() == Rol.EMPRESA) {
             Span empresaSection = new Span("MI EMPRESA");
             empresaSection.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Top.MEDIUM);
 
-            RouterLink miProyecto = new RouterLink();
-            miProyecto.setRoute(MiProyectoView.class);
-            miProyecto.add(VaadinIcon.FACTORY.create(), new Span(" Mi Proyecto"));
-            miProyecto.addClassNames(LumoUtility.Display.FLEX, LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL);
-
-            menu.add(empresaSection, miProyecto);
+            menu.add(empresaSection);
+            menu.add(crearLink(MiProyectoView.class, VaadinIcon.FACTORY, " Mi Proyecto"));
         }
 
         addToDrawer(menu);
     }
-}
 
+    // Método auxiliar para no repetir tanto código de los links
+    private RouterLink crearLink(Class viewClass, VaadinIcon icon, String text) {
+        RouterLink link = new RouterLink();
+        link.setRoute(viewClass);
+        link.add(icon.create(), new Span(text));
+        link.addClassNames(LumoUtility.Display.FLEX, LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL);
+        return link;
+    }
+}
 
 /*package com.unrn.gpiv.views;
 

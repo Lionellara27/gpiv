@@ -10,23 +10,39 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+//cosas new
+import com.unrn.gpiv.service.EmpresaService; // <--- 1. IMPORTANTE: Importá tu Service
+import org.springframework.beans.factory.annotation.Autowired; // <--- 2. Para la inyección
 
 @PageTitle("Dashboard Administrador | SGPIV")
 @Route(value = "admin/dashboard", layout = MainLayout.class)
 public class AdminDashboardView extends VerticalLayout {
+    private final EmpresaService empresaService; // <--- 3. Variable para el Service
 
-    public AdminDashboardView() {
+    public AdminDashboardView(@Autowired EmpresaService empresaService) {
+        this.empresaService = empresaService;
         setPadding(true);
         setSpacing(true);
         setSizeFull();
 
         H2 header = new H2("Tablero de Gestión Municipal");
 
-        // --- TARJETAS KPI ---
+// --- TARJETAS KPI (LIMPIO) ---
         HorizontalLayout kpiLayout = new HorizontalLayout();
         kpiLayout.setWidthFull();
+        kpiLayout.setSpacing(true);
+
+// 1. La tarjeta dinámica que acabamos de arreglar
+        long numPendientes = empresaService.contarSolicitudesPendientes();
+        String textoPendientes = numPendientes + (numPendientes == 1 ? " PENDIENTE" : " PENDIENTES");
+
+        VerticalLayout cardSolicitudes = crearTarjetaKPI("SOLICITUDES", textoPendientes, VaadinIcon.FILE_TEXT, "#0063BE");
+        cardSolicitudes.getStyle().set("cursor", "pointer");
+        cardSolicitudes.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("admin/evaluar")));
+
+// 2. Agregamos UNA SOLA VEZ cada tarjeta al layout
         kpiLayout.add(
-                crearTarjetaKPI("SOLICITUDES", "4 PENDIENTES", VaadinIcon.FILE_TEXT, "#0063BE"),
+                cardSolicitudes, // La azul primero (o donde más te guste)
                 crearTarjetaKPI("LOTES", "12 LIBRES", VaadinIcon.MAP_MARKER, "#009A3B"),
                 crearTarjetaKPI("EMPRESAS", "45 RADICADAS", VaadinIcon.FACTORY, "#666"),
                 crearTarjetaKPI("PRÉSTAMOS", "2 ACTIVOS", VaadinIcon.TOOLS, "#E67E22")
