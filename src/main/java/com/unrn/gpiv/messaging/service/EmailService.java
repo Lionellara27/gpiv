@@ -1,5 +1,6 @@
 package com.unrn.gpiv.messaging.service;
 
+import com.unrn.gpiv.model.Empresa;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -21,4 +22,11 @@ public class EmailService {
 
         mailSender.send(email);
     }
+
+    public void notificarNuevaSolicitud(Empresa empresa) {
+        // Por ahora, un log o un sistema interno de mensajes
+        System.out.println("NOTIFICACIÓN: Nueva solicitud recibida de: " + empresa.getRazonSocial());
+        // implementar invio de email aca
+    }
+
 }

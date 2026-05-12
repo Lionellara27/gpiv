@@ -29,7 +29,7 @@ public class ProyectoProductivo {
     private String destinoProduccion;
 
     @Enumerated(EnumType.STRING)
-    private TipoServicio tipoServicio; // <--- USANDO TU ENUM EXISTENTE
+    private TipoServicio tipoServicio;
 
     private String tipoResiduos;
 
@@ -37,6 +37,12 @@ public class ProyectoProductivo {
     private Emplazamiento emplazamientoActual;
 
     private String materiaPrima;
+
+    @Column(name = "pdf_proyecto")
+    private byte[] pdfProyecto;
+
+    @Column(name = "nombre_archivo_pdf")
+    private String nombreArchivoPdf;
 
     // Personal Ocupado
     private int cantJerarquico;

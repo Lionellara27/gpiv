@@ -1,5 +1,6 @@
 package com.unrn.gpiv.model;
 
+import com.unrn.gpiv.common.EstadoSolicitud;
 import com.unrn.gpiv.inventory.model.Recurso; // Importamos la clase del otro módulo
 import jakarta.persistence.*;
 import java.util.ArrayList;
@@ -12,6 +13,9 @@ public class Empresa {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Enumerated(EnumType.STRING)
+    private EstadoSolicitud estado = EstadoSolicitud.PENDIENTE;
 
     private String razonSocial;
     private String cuit;
@@ -76,4 +80,8 @@ public class Empresa {
 
     public List<Recurso> getHerramientasAportadas() { return herramientasAportadas; }
     public void setHerramientasAportadas(List<Recurso> lista) { this.herramientasAportadas = lista; }
+
+    public void setEstado(EstadoSolicitud estadoSolicitud) {
+        this.estado = estadoSolicitud;
+    }
 }

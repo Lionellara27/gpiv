@@ -1,0 +1,16 @@
+package com.unrn.gpiv.repository;
+
+import com.unrn.gpiv.model.Empresa;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.Optional;
+
+@Repository
+public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
+
+    // Para buscar por CUIT (cuando ya esta radicada)
+    Optional<Empresa> findByCuit(String cuit);
+
+    // Para validar si una Razon Social ya existe y evitar duplicados
+    boolean existsByRazonSocial(String razonSocial);
+}

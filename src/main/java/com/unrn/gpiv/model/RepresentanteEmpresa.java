@@ -18,12 +18,10 @@ public class RepresentanteEmpresa extends Usuario {
 
     // EL CONSTRUCTOR CORREGIDO:
     public RepresentanteEmpresa() {
-        // Usamos "EMPRESA" porque así se llama en tu Enum Rol.java
         this.setRol(Rol.EMPRESA);
     }
 
     // --- GETTERS Y SETTERS ---
-    // (Los que ya tenías)
     public String getNombreCompleto() { return nombreCompleto; }
     public void setNombreCompleto(String nombre) { this.nombreCompleto = nombre; }
     public String getDni() { return dni; }

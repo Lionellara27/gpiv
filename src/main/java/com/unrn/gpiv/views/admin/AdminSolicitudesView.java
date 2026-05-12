@@ -1,9 +1,8 @@
-package com.unrn.gpiv.views.evaluadores;
+package com.unrn.gpiv.views.admin;
 
 import com.unrn.gpiv.model.SolicitudRadicacion;
 import com.unrn.gpiv.repository.SolicitudRadicacionRepository;
 import com.unrn.gpiv.service.EmpresaService;
-import com.unrn.gpiv.views.MainLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
@@ -17,49 +16,48 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
 
-@Route(value = "evaluar", layout = MainLayout.class)
-public class EvaluarSolicitudesView extends VerticalLayout {
+@Route("admin/solicitudes")
+public class AdminSolicitudesView extends VerticalLayout {
 
     private Grid<SolicitudRadicacion> grid = new Grid<>(SolicitudRadicacion.class, false);
 
-    //Inyectamos los componentes en constructor
-    public EvaluarSolicitudesView(@Autowired SolicitudRadicacionRepository repository, @Autowired EmpresaService service) {
+    public AdminSolicitudesView(@Autowired SolicitudRadicacionRepository repository, @Autowired EmpresaService service) {
         setSizeFull();
         setPadding(true);
 
-        H2 titulo = new H2("Evaluar Solicitudes de Radicación");
+        H2 titulo = new H2("Solicitudes de Radicación Pendientes");
 
-        // --- CONFIGURACIÓN DE LA TABLA ---
+        // --- CONFIGURACIÓN DE LA TABLA (GRID) ---
         grid.addColumn(s -> s.getRepresentante().getNombreCompleto()).setHeader("Representante");
-        grid.addColumn(SolicitudRadicacion::getRazonSocialPretendida).setHeader("Empresa");
+        grid.addColumn(SolicitudRadicacion::getRazonSocialPretendida).setHeader("Empresa Pretendida");
         grid.addColumn(s -> s.getProyecto().getActividadPrincipal()).setHeader("Actividad");
 
         // Columna para descargar el PDF
         grid.addComponentColumn(solicitud -> {
-            if (solicitud.getProyecto() != null && solicitud.getProyecto().getPdfProyecto() != null) {
+            if (solicitud.getProyecto().getPdfProyecto() != null) {
                 StreamResource resource = new StreamResource(solicitud.getProyecto().getNombreArchivoPdf(),
                         () -> new ByteArrayInputStream(solicitud.getProyecto().getPdfProyecto()));
-                Anchor link = new Anchor(resource, "Ver PDF");
+                Anchor link = new Anchor(resource, "Descargar PDF");
                 link.getElement().setAttribute("download", true);
                 return link;
             }
             return new com.vaadin.flow.component.html.Span("Sin PDF");
-        }).setHeader("Planos/Proyecto");
+        }).setHeader("Documentación");
 
         // Botón para Aprobar
         grid.addComponentColumn(solicitud -> {
             Button btnAprobar = new Button("Aprobar", e -> {
                 service.aprobarRadicacion(solicitud.getId());
-                Notification.show("Solicitud aprobada: Empresa creada.");
+                Notification.show("Empresa radicada con éxito");
                 actualizarTabla(repository);
             });
             btnAprobar.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
             return btnAprobar;
         }).setHeader("Acciones");
 
-        add(titulo, grid);
-
         actualizarTabla(repository);
+
+        add(titulo, grid);
     }
 
     private void actualizarTabla(SolicitudRadicacionRepository repository) {
