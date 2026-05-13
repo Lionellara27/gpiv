@@ -2,9 +2,12 @@ package com.unrn.gpiv.model;
 
 import com.unrn.gpiv.common.Rol; // Importamos tu Enum
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @DiscriminatorValue("REPRESENTANTE")
+@Getter @Setter
 public class RepresentanteEmpresa extends Usuario {
 
     private String nombreCompleto;

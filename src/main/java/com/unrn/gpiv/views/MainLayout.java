@@ -4,6 +4,7 @@ import com.unrn.gpiv.common.Rol;
 import com.unrn.gpiv.model.Usuario;
 import com.unrn.gpiv.views.admin.*;
 import com.unrn.gpiv.views.empresa.MiProyectoView;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
@@ -30,11 +31,27 @@ public class MainLayout extends AppLayout {
 
         DrawerToggle toggle = new DrawerToggle();
 
-        // Botón de salir (Opcional, pero muy útil)
+        // Botón de salir (Opcional, pero muy útil - anda mal cambiar)
+        /*
         Button btnLogout = new Button("Salir", VaadinIcon.SIGN_OUT.create(), e -> {
             VaadinSession.getCurrent().getSession().invalidate();
             getUI().ifPresent(ui -> ui.navigate("login"));
+        });*/
+
+        Button btnLogout = new Button("Salir", VaadinIcon.SIGN_OUT.create(), e -> {
+            // 1. Limpiamos nuestro atributo manual por las dudas
+            VaadinSession.getCurrent().setAttribute("usuarioLogueado", null);
+
+            // 2. Cerramos la sesión de Vaadin y la de HTTP
+            VaadinSession.getCurrent().close();
+            VaadinSession.getCurrent().getSession().invalidate();
+
+            // 3. REDIRECCIÓN TOTAL (La clave)
+            // En vez de navigate(), usamos setLocation.
+            // Esto obliga al navegador a recargar la página desde cero.
+            UI.getCurrent().getPage().setLocation("login");
         });
+
         btnLogout.addClassNames(LumoUtility.Margin.Left.AUTO, LumoUtility.Margin.Right.MEDIUM);
 
         var header = new HorizontalLayout(toggle, logo, btnLogout);

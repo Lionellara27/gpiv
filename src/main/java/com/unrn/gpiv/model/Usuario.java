@@ -17,6 +17,8 @@ public abstract class Usuario {
     private String username;
 
     private String password;
+
+    @Column(unique = true, nullable = false)
     private String email;
 
     @Enumerated(EnumType.STRING)
