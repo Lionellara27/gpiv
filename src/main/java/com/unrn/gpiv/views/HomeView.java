@@ -30,7 +30,7 @@ public class HomeView extends VerticalLayout {
         header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
         header.setAlignItems(Alignment.CENTER);
 
-        Image logo = new Image("images/logo-parque.png", "Logo del Parque Industrial");
+        Image logo = new Image("images/Enrepavi.png", "Logo del Parque Industrial");
         logo.setHeight("180px"); // Logo grande de presentación
 
         Div lineasBandera = new Div();

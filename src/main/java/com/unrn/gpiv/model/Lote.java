@@ -46,7 +46,9 @@ public class Lote {
     private Empresa empresa;
 
     public Lote() {
+        
     }
+
 
     // --- MÉTODOS DE CONVENIENCIA ---
 
