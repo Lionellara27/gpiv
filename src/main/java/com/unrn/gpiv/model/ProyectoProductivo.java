@@ -16,6 +16,10 @@ public class ProyectoProductivo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // --- AGREGÁ ESTA LÍNEA ---
+    @Column(nullable = false)
+    private String nombreProyecto;
+
     // --- NUEVO: Lo que agregamos para el formulario ---
     @Column(nullable = false)
     private String superficieRequerida;

@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class EmpresaService {
 
@@ -29,7 +31,37 @@ public class EmpresaService {
         // rep.setPassword(passwordEncoder.encode(rep.getPassword()));
         return representanteRepository.save(rep);
     }*/
-    // cositas NEWWWWWWWWW
+    // cositas NEWWWWWWWWW 12/05
+    @Transactional
+    public RepresentanteEmpresa registrarRepresentante(RepresentanteEmpresa rep) {
+        // 1. CHEQUEO DE EMAIL (El que evita el bug de Mariano)
+        // Usamos usuarioRepository porque el mail está en la clase madre 'Usuario'
+        if (usuarioRepository.existsByEmail(rep.getEmail())) {
+            throw new IllegalArgumentException("Este correo electrónico ya está registrado. Por favor, iniciá sesión.");
+        }
+
+        // 2. CHEQUEO DE USERNAME (Por si el username no fuera el mail)
+        if (usuarioRepository.existsByUsername(rep.getUsername())) {
+            throw new IllegalArgumentException("El nombre de usuario ya está en uso.");
+        }
+
+        // 3. CHEQUEOS DE IDENTIDAD (DNI y CUIT)
+        if (representanteRepository.existsByDni(rep.getDni())) {
+            throw new IllegalArgumentException("Ya existe un usuario registrado con este DNI.");
+        }
+
+        if (representanteRepository.existsByCuitPersonal(rep.getCuitPersonal())) {
+            throw new IllegalArgumentException("Este CUIT ya está vinculado a otra cuenta.");
+        }
+
+        try {
+            return representanteRepository.save(rep);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // La última red de seguridad por si falla lo anterior
+            throw new IllegalArgumentException("Error de base de datos: Algunos de los datos ya existen.");
+        }
+    }
+    /* nuevo pero 11/05
     @Transactional
     public RepresentanteEmpresa registrarRepresentante(RepresentanteEmpresa rep) {
         // 1. PREVENCIÓN: Evitás el choque antes de que ocurra.
@@ -54,6 +86,8 @@ public class EmpresaService {
             throw new IllegalArgumentException("Error de duplicado: Los datos ya existen en el sistema.");
         }
     }
+    */
+
     //El representante envia proyecto
 /*@Transactional
     public void recibirSolicitud(ProyectoProductivo proyecto, RepresentanteEmpresa rep, String razonSocial) {
@@ -139,6 +173,50 @@ public class EmpresaService {
                 .filter(u -> u.getPassword().equals(password)) // Comparación simple
                 .orElseThrow(() -> new RuntimeException("Usuario o password inválidos"));
     }
+
+    // --- MÉTODO CLAVE PARA EL BUG GRANDE ---
+    @Transactional(readOnly = true)
+    public SolicitudRadicacion obtenerUltimaSolicitud(RepresentanteEmpresa rep) {
+        // Usamos el repository que ya tenés para buscar por el ID del representante
+        List<SolicitudRadicacion> solicitudes = solicitudRepository.findByRepresentanteId(rep.getId());
+
+        if (solicitudes.isEmpty()) {
+            return null;
+        }
+
+        // Devolvemos la última cargada (la más reciente)
+        return solicitudes.get(solicitudes.size() - 1);
+    }
+
+    // 1. Para rescatar los datos y mostrarlos en los TextFields al editar
+    public SolicitudRadicacion obtenerSolicitudPorId(Long id) {
+        return solicitudRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No encontré la solicitud con ID: " + id));
+    }
+
+    // 2. Para guardar los cambios cuando Mariano termina de editar
+    @Transactional
+    public void actualizarSolicitud(SolicitudRadicacion solicitud) {
+        // Como la solicitud ya tiene un ID, el .save() de Spring se da cuenta
+        // solo que tiene que hacer un UPDATE y no un INSERT nuevo.
+        solicitudRepository.save(solicitud);
+    }
+
+
+    //si toca el ojito odescarga chau posibilidad de modificar
+    @Transactional
+    public void marcarComoEnEvaluacion(Long solicitudId) {
+        SolicitudRadicacion sol = solicitudRepository.findById(solicitudId)
+                .orElseThrow(() -> new RuntimeException("No se encontró la solicitud"));
+
+        // Solo hacemos el cambio si está en PENDIENTE.
+        // Si ya está APROBADA o RECHAZADA, no queremos volver atrás.
+        if (sol.getEstado() == EstadoSolicitud.PENDIENTE) {
+            sol.setEstado(EstadoSolicitud.EN_EVALUACION);
+            solicitudRepository.save(sol);
+        }
+    }
+
 
     //contabilizar pendientes
     public long contarSolicitudesPendientes() {
