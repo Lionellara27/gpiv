@@ -33,7 +33,7 @@ public class MainLayout extends AppLayout {
         // Botón de salir (Opcional, pero muy útil)
         Button btnLogout = new Button("Salir", VaadinIcon.SIGN_OUT.create(), e -> {
             VaadinSession.getCurrent().getSession().invalidate();
-            getUI().ifPresent(ui -> ui.navigate("login"));
+            getUI().ifPresent(ui -> ui.navigate(""));
         });
         btnLogout.addClassNames(LumoUtility.Margin.Left.AUTO, LumoUtility.Margin.Right.MEDIUM);
 
