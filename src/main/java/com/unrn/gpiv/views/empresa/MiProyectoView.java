@@ -108,7 +108,37 @@ public class MiProyectoView extends VerticalLayout {
         datosProyecto.add(new Paragraph("Servicios: " + (servicios.isEmpty() ? "Ninguno" : servicios)));
 
         add(titulo, statusCard, datosProyecto);
+
+        //CAMBIOOOOOOOS DEULTIMOOOOOO MOMENTO
+        // Forzamos al navegador a que le consulte al servidor cada 3000ms (3 segundos)
+        com.vaadin.flow.component.UI.getCurrent().setPollInterval(3000);
+
+        com.vaadin.flow.component.UI.getCurrent().addPollListener(e -> {
+            // Buscamos la información fresquita directo de la base de datos
+            SolicitudRadicacion solActualizada = empresaService.obtenerUltimaSolicitud(logueado);
+
+            if (solActualizada != null) {
+                EstadoSolicitud nuevoEstado = solActualizada.getEstado();
+
+                // 1. Actualizamos el texto y color del badge en tiempo real
+                badgeEstado.setText(nuevoEstado.name());
+                configurarEstiloBadge(badgeEstado, nuevoEstado);
+
+                // 2. Cambiamos el párrafo de descripción automáticamente
+                infoEstado.setText(obtenerMensajeEstado(nuevoEstado));
+
+                // 3. ¡EL CIERRE CON CANDADO! Si el Admin lo abrió o evaluó, le desactivamos el botón
+                if (nuevoEstado != EstadoSolicitud.PENDIENTE) {
+                    btnModificar.setEnabled(false);
+                    btnModificar.setTooltipText("No se puede editar: el proyecto ya está en evaluación.");
+                } else {
+                    btnModificar.setEnabled(true);
+                    btnModificar.setTooltipText(null);
+                }
+            }
+        });
     }
+    //jasta acaaaaaaaaaaaaaaa
 
     private void renderizarVistaSinProyecto() {
         add(new H2("Aún no has presentado ningún proyecto."));

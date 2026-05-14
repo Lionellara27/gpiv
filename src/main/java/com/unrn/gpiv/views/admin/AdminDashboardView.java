@@ -125,6 +125,21 @@ public class AdminDashboardView extends VerticalLayout {
         tablasLayout.add(inventorySection, consumosSection);
 
         add(header, kpiLayout, tablasLayout);
+        // Le dice a Vaadin que refresque de fondo de manera reactiva
+        com.vaadin.flow.component.UI.getCurrent().setPollInterval(3000);
+
+        com.vaadin.flow.component.UI.getCurrent().addPollListener(e -> {
+            long actualPendientes = empresaService.contarSolicitudesPendientes();
+            String nuevoTexto = actualPendientes + (actualPendientes == 1 ? " PENDIENTE" : " PENDIENTES");
+
+            // Truco de magia: busca el Span del valor adentro de la tarjeta y lo actualiza
+            cardSolicitudes.getChildren()
+                    .filter(c -> c instanceof Span)
+                    .skip(1) // Se saltea el primer Span que es el título ("SOLICITUDES")
+                    .findFirst()
+                    .ifPresent(c -> ((Span) c).setText(nuevoTexto));
+        });
+        // =========
     }
 
     private VerticalLayout crearTarjetaKPI(String titulo, String valor, VaadinIcon icono, String color) {
