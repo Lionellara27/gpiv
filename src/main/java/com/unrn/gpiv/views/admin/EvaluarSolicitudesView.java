@@ -81,14 +81,6 @@ public class EvaluarSolicitudesView extends VerticalLayout {
 
         card.add(tabs, grid);
         add(titulo, subtitulo, card);
-        // =========================================================================
-        com.vaadin.flow.component.UI.getCurrent().setPollInterval(3000);
-
-        com.vaadin.flow.component.UI.getCurrent().addPollListener(e -> {
-            // Va solo a la BD, trae los cambios de Alberto y re-pinta la grilla
-            filtrarGrilla();
-        });
-        // ======
     }
 
     private Span crearBadgeEstado(SolicitudRadicacion solicitud) {
