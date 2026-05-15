@@ -12,6 +12,7 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.router.PageTitle;
@@ -25,14 +26,19 @@ public class RegistrarLotesView extends VerticalLayout {
 	private BeanValidationBinder<Lote> binder = new BeanValidationBinder<>(Lote.class);
 
 	private TextField manzana = new TextField("Manzana");
+	private TextField ubicacion = new TextField("Ubicacion");
 	private TextField nroLote = new TextField("Número de Lote");
 	private NumberField superficie = new NumberField("Superficie (m²)");
+	private TextArea caracteristicas = new TextArea("Caracteristicas");
 
 	public RegistrarLotesView(LoteService loteService) {
 		this.loteService = loteService;
 		add(new H2("Registrar Nuevo Lote"));
-		FormLayout form = new FormLayout(manzana, nroLote, superficie);
+
+		FormLayout form = new FormLayout(manzana, ubicacion, nroLote, superficie, caracteristicas);
+		
 		binder.bindInstanceFields(this);
+
 		Button guardar = new Button("Registrar Lote", e -> guardarNuevoLote());
 		guardar.addThemeNames("primary");
 		Button cancelar = new Button("Cancelar", e -> getUI().ifPresent(ui -> ui.navigate("admin/lotes")));
@@ -42,7 +48,6 @@ public class RegistrarLotesView extends VerticalLayout {
 	private void guardarNuevoLote() {
 		Lote nuevoLote = new Lote();
 
-		//seteo el estado para evitar nulo en DB
 		nuevoLote.setEstado(EstadoLote.LIBRE);
 
 		if (binder.writeBeanIfValid(nuevoLote)) {

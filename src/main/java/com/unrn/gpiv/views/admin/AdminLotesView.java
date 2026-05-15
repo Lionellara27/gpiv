@@ -54,7 +54,7 @@ public class AdminLotesView extends VerticalLayout {
         header.setVerticalComponentAlignment(Alignment.CENTER, btnAgregar); // Alinea el botón con el texto
         header.setSpacing(true);
 
-        configurarGrid();
+        modificarGrillaLote();
         
         HorizontalLayout content = new HorizontalLayout(grid, crearFormulario());
         content.setSizeFull();
@@ -123,12 +123,14 @@ public class AdminLotesView extends VerticalLayout {
         grid.setItems(loteService.listarTodos());
     }
 
-    private void configurarGrid() {
+    private void modificarGrillaLote() {
         grid.setSizeFull();
         grid.addColumn(Lote::getManzana).setHeader("Manzana");
         grid.addColumn(Lote::getNroLote).setHeader("Nro. Lote");
         grid.addColumn(Lote::getSuperficie).setHeader("Superficie");
         grid.addColumn(Lote::getEstado).setHeader("Estado");
         grid.getColumns().forEach(c -> c.setAutoWidth(true));
+
+        grid.asSingleSelect().addValueChangeListener(event -> editarLote(event.getValue()));
     }
 }
