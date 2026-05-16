@@ -26,8 +26,8 @@ public class RegistrarLotesView extends VerticalLayout {
 	private BeanValidationBinder<Lote> binder = new BeanValidationBinder<>(Lote.class);
 
 	private TextField manzana = new TextField("Manzana");
-	private TextField ubicacion = new TextField("Ubicacion");
 	private TextField nroLote = new TextField("Número de Lote");
+	private TextField ubicacion = new TextField("Ubicacion");
 	private NumberField superficie = new NumberField("Superficie (m²)");
 	private TextArea caracteristicas = new TextArea("Caracteristicas");
 
@@ -35,8 +35,14 @@ public class RegistrarLotesView extends VerticalLayout {
 		this.loteService = loteService;
 		add(new H2("Registrar Nuevo Lote"));
 
-		FormLayout form = new FormLayout(manzana, ubicacion, nroLote, superficie, caracteristicas);
-		
+		FormLayout form = new FormLayout(manzana, nroLote, ubicacion, superficie, caracteristicas);
+
+		// Vinculacion manual
+		binder.forField(manzana).asRequired("La manzana es obligatoria").bind(Lote::getManzana, Lote::setManzana);
+		binder.forField(nroLote).asRequired("El número es obligatorio").bind(Lote::getNroLote, Lote::setNroLote);
+		binder.forField(superficie).asRequired("La superficie es obligatoria").bind(Lote::getSuperficie, Lote::setSuperficie);
+
+		// Los que no son obligatorios pueden ir con el automatico o manual
 		binder.bindInstanceFields(this);
 
 		Button guardar = new Button("Registrar Lote", e -> guardarNuevoLote());
@@ -48,22 +54,20 @@ public class RegistrarLotesView extends VerticalLayout {
 	private void guardarNuevoLote() {
 		Lote nuevoLote = new Lote();
 
-		nuevoLote.setEstado(EstadoLote.LIBRE);
-
 		if (binder.writeBeanIfValid(nuevoLote)) {
 			try {
 				loteService.guardar(nuevoLote);
-				Notification.show("Lote registrado con éxito")
+				Notification.show("Lote registrado con exito", 3000, Notification.Position.TOP_CENTER)
 						.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
 				getUI().ifPresent(ui -> ui.navigate("admin/lotes"));
 			} catch (Exception ex) {
-				Notification.show("Error al guardar: " + ex.getMessage(), 5000, Notification.Position.MIDDLE)
+				Notification.show("Error al guardar: " + ex.getMessage(), 3000, Notification.Position.TOP_CENTER)
 						.addThemeVariants(NotificationVariant.LUMO_ERROR);
 			}
 		} else {
 			Notification.show("Por favor, revise los errores en el formulario",
-					3000, Notification.Position.MIDDLE);
+					3000, Notification.Position.TOP_CENTER);
 		}
 	}
 }

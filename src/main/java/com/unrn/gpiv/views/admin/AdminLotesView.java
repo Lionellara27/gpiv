@@ -14,15 +14,18 @@ import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 @PageTitle("Gestión de Lotes | SGPIV")
 @Route(value = "admin/lotes", layout = MainLayout.class)
-public class AdminLotesView extends VerticalLayout {
+public class AdminLotesView extends VerticalLayout implements BeforeEnterObserver {
 
     private final LoteService loteService; // Inyectado por Spring
     private Grid<Lote> grid = new Grid<>(Lote.class, false);
@@ -34,52 +37,75 @@ public class AdminLotesView extends VerticalLayout {
     private TextField nroLote = new TextField("Nro. Lote");
     private NumberField superficie = new NumberField("Superficie (m2)");
     private ComboBox<EstadoLote> estado = new ComboBox<>("Estado", EstadoLote.values());
+    private TextField ubicacion = new TextField("Ubicación");
+    private TextArea caracteristicas = new TextArea("Características");
 
     private Button guardar = new Button("Guardar");
     private Button cancelar = new Button("Cancelar");
+    private VerticalLayout panelEdicion;
 
     // Constructor con Inyección de Dependencias
     public AdminLotesView(LoteService loteService) {
         this.loteService = loteService;
         setSizeFull();
+        setPadding(true);
+        setSpacing(true);
 
-        // Creamos el encabezado con el título y el botón al lado
         H2 titulo = new H2("Gestión de Lotes");
-        Button btnAgregar = new Button("Agregar Lote", e -> 
-            getUI().ifPresent(ui -> ui.navigate(RegistrarLotesView.class))
+        Button btnAgregar = new Button("Agregar Lote", e ->
+                getUI().ifPresent(ui -> ui.navigate(RegistrarLotesView.class))
         );
         btnAgregar.addThemeNames("primary", "success");
 
         HorizontalLayout header = new HorizontalLayout(titulo, btnAgregar);
-        header.setVerticalComponentAlignment(Alignment.CENTER, btnAgregar); // Alinea el botón con el texto
+        header.setVerticalComponentAlignment(Alignment.CENTER, btnAgregar);
         header.setSpacing(true);
 
-        modificarGrillaLote();
-        
-        HorizontalLayout content = new HorizontalLayout(grid, crearFormulario());
+        tablaPrincipalLotes();
+        this.panelEdicion = formularioDeEdicionLote();
+
+        HorizontalLayout content = new HorizontalLayout(grid, panelEdicion);
         content.setSizeFull();
 
-        add(header, content); // Agregamos el nuevo encabezado
+        content.setFlexGrow(1, grid);
+        content.setFlexGrow(0, panelEdicion);
+
+        add(header, content);
         actualizarTabla();
     }
 
-    private VerticalLayout crearFormulario() {
-        FormLayout formLayout = new FormLayout(manzana, nroLote, superficie, estado);
-        
-        // Vinculamos automáticamente los campos por nombre
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        // Esto se ejecuta CADA VEZ que alguien entra a la ruta "admin/lotes" (para refrescar la tabla y aparezcan los datos registrados)
+        actualizarTabla();
+    }
+
+    private VerticalLayout formularioDeEdicionLote() {
+        FormLayout formLayout = new FormLayout();
+        formLayout.add(manzana, nroLote, ubicacion, superficie, estado, caracteristicas);
+
+        // caracteristicas para que ocupe dos columnas del formulario
+        formLayout.setColspan(caracteristicas, 2);
+
+        formLayout.setWidthFull();
         binder.bindInstanceFields(this);
 
         guardar.addThemeNames("primary");
         guardar.addClickListener(event -> accionGuardar());
-        
         cancelar.addClickListener(event -> limpiarFormulario());
 
         HorizontalLayout toolbar = new HorizontalLayout(guardar, cancelar);
+
         VerticalLayout panel = new VerticalLayout(new H2("Detalles del Lote"), formLayout, toolbar);
-        panel.setWidth("350px");
-        panel.setVisible(false); // Oculto hasta que se seleccione algo
+        panel.setWidth("400px");
+        panel.setMinWidth("350px");
+        panel.setVisible(false);
         panel.setId("formulario-edicion");
-        
+
+        // Estilo para que se vea como un panel lateral
+        panel.getStyle().set("border-left", "1px solid #e5e5e5");
+        panel.getStyle().set("background-color", "#fcfcfc");
+
         return panel;
     }
 
@@ -87,14 +113,14 @@ public class AdminLotesView extends VerticalLayout {
         try {
             Lote lote = binder.getBean(); // Obtenemos el lote que se está editando
             
-            // 1. Guardar en la Base de Datos a través del servicio
+            // Guardar en la Base de Datos a través del servicio
             loteService.guardar(lote);
             
-            // 2. Feedback al usuario
-            Notification.show("Lote guardado con éxito")
-                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            // Notificacion al usuario
+            Notification.show("Lote guardado con exito", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             
-            // 3. Refrescar la interfaz
+            // Refrescar la interfaz
             actualizarTabla();
             limpiarFormulario();
             
@@ -108,8 +134,8 @@ public class AdminLotesView extends VerticalLayout {
         if (lote == null) {
             limpiarFormulario();
         } else {
-            binder.setBean(lote); // Mapea los datos del lote a los campos de texto
-            guardar.getParent().get().getParent().get().setVisible(true); // Muestra el panel
+            binder.setBean(lote);
+            panelEdicion.setVisible(true);
         }
     }
 
@@ -123,14 +149,38 @@ public class AdminLotesView extends VerticalLayout {
         grid.setItems(loteService.listarTodos());
     }
 
-    private void modificarGrillaLote() {
+    private void tablaPrincipalLotes() {
         grid.setSizeFull();
-        grid.addColumn(Lote::getManzana).setHeader("Manzana");
-        grid.addColumn(Lote::getNroLote).setHeader("Nro. Lote");
-        grid.addColumn(Lote::getSuperficie).setHeader("Superficie");
-        grid.addColumn(Lote::getEstado).setHeader("Estado");
-        grid.getColumns().forEach(c -> c.setAutoWidth(true));
 
+        grid.addColumn(Lote::getManzana).setHeader("Manzana").setSortable(true);
+        grid.addColumn(Lote::getNroLote).setHeader("Nro. Lote").setSortable(true);
+        grid.addColumn(Lote::getUbicacion).setHeader("Ubicación");
+        grid.addColumn(lote -> lote.getSuperficie() + " m²").setHeader("Superficie");
+        grid.addColumn(Lote::getCaracteristicas).setHeader("Características");
+
+        // COLORES SEGÚN TUS NUEVOS TIPOS
+        grid.addComponentColumn(lote -> {
+            com.vaadin.flow.component.html.Span badge = new com.vaadin.flow.component.html.Span(lote.getEstado().toString());
+            badge.getElement().getThemeList().add("badge");
+
+            switch (lote.getEstado()) {
+                case LIBRE:
+                    badge.getElement().getThemeList().add("success");
+                    break;
+                case RESERVADO:
+                    badge.getElement().getThemeList().add("contrast");
+                    break;
+                case OCUPADO:
+                    badge.getStyle().set("background-color", "#e0f7fa").set("color", "#006064");
+                    break;
+                case OCIOSO:
+                    badge.getElement().getThemeList().add("error");
+                    break;
+            }
+            return badge;
+        }).setHeader("Estado").setSortable(true);
+
+        grid.getColumns().forEach(c -> c.setAutoWidth(true));
         grid.asSingleSelect().addValueChangeListener(event -> editarLote(event.getValue()));
     }
 }

@@ -3,6 +3,8 @@ package com.unrn.gpiv.service;
 import com.unrn.gpiv.model.Lote;
 import com.unrn.gpiv.repository.LoteRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -19,8 +21,9 @@ public class LoteService {
         return repository.findAll();
     }
 
+    @Transactional
     public void guardar(Lote lote) {
-        repository.save(lote);
+        repository.saveAndFlush(lote); // El "Flush" obliga a escribir en la DB YA mismo
     }
     
     public void eliminar(Lote lote) {
