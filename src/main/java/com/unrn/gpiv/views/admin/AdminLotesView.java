@@ -1,7 +1,9 @@
 package com.unrn.gpiv.views.admin;
 
+import com.unrn.gpiv.model.Empresa;
 import com.unrn.gpiv.model.Lote;
 import com.unrn.gpiv.common.EstadoLote;
+import com.unrn.gpiv.service.EmpresaService;
 import com.unrn.gpiv.service.LoteService; // Tu servicio de Spring
 import com.unrn.gpiv.views.MainLayout;
 import com.vaadin.flow.component.button.Button;
@@ -23,11 +25,14 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+import java.time.LocalDate;
+
 @PageTitle("Gestión de Lotes | SGPIV")
 @Route(value = "admin/lotes", layout = MainLayout.class)
 public class AdminLotesView extends VerticalLayout implements BeforeEnterObserver {
 
     private final LoteService loteService; // Inyectado por Spring
+    private final EmpresaService empresaService; //inyectado en el constructor
     private Grid<Lote> grid = new Grid<>(Lote.class, false);
     
     // El Binder conecta el objeto Lote con los inputs del formulario
@@ -39,14 +44,16 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
     private ComboBox<EstadoLote> estado = new ComboBox<>("Estado", EstadoLote.values());
     private TextField ubicacion = new TextField("Ubicación");
     private TextArea caracteristicas = new TextArea("Características");
+    private ComboBox<Empresa> empresaAsignada = new ComboBox<>("Asignar Empresa/Productor"); // se habilita cuando el estado del lotes es LIBRE
 
     private Button guardar = new Button("Guardar");
     private Button cancelar = new Button("Cancelar");
     private VerticalLayout panelEdicion;
 
     // Constructor con Inyección de Dependencias
-    public AdminLotesView(LoteService loteService) {
+    public AdminLotesView(LoteService loteService, EmpresaService empresaService) {
         this.loteService = loteService;
+        this.empresaService = empresaService;
         setSizeFull();
         setPadding(true);
         setSpacing(true);
@@ -82,10 +89,12 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
 
     private VerticalLayout formularioDeEdicionLote() {
         FormLayout formLayout = new FormLayout();
-        formLayout.add(manzana, nroLote, ubicacion, superficie, estado, caracteristicas);
+        formLayout.add(manzana, nroLote, ubicacion, superficie, estado, caracteristicas, empresaAsignada);
 
-        // caracteristicas para que ocupe dos columnas del formulario
+        // caracteristicas ocupa dos columnas del formulario
         formLayout.setColspan(caracteristicas, 2);
+
+        empresaAsignada.setItemLabelGenerator(Empresa::getRazonSocial);
 
         formLayout.setWidthFull();
         binder.bindInstanceFields(this);
@@ -111,16 +120,18 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
 
     private void accionGuardar() {
         try {
-            Lote lote = binder.getBean(); // Obtenemos el lote que se está editando
-            
-            // Guardar en la Base de Datos a través del servicio
+            Lote lote = binder.getBean(); // fila del lote seleccionado
+            if (lote.getEstado() == EstadoLote.LIBRE && empresaAsignada.getValue() != null) {
+                lote.setEmpresa(empresaAsignada.getValue());
+                lote.setFechaAsignacion(LocalDate.now()); // Registra la fecha de asignacion
+                lote.setEstado(EstadoLote.OCUPADO);
+            }
+
             loteService.guardar(lote);
-            
-            // Notificacion al usuario
+
             Notification.show("Lote guardado con exito", 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-            
-            // Refrescar la interfaz
+
             actualizarTabla();
             limpiarFormulario();
             
@@ -135,14 +146,28 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
             limpiarFormulario();
         } else {
             binder.setBean(lote);
+
+            if (lote.getEstado() == EstadoLote.LIBRE) {
+                empresaAsignada.setVisible(true);
+                empresaAsignada.setEnabled(true);
+                // cargo solo las empresas aprobadas que no tengan lote
+                empresaAsignada.setItems(empresaService.listarAprobadasSinLote());
+            } else {
+                // Si esta ocupado, muestra la empresa que ya lo tiene pero deshabilitado
+                empresaAsignada.setVisible(lote.getEmpresa() != null);
+                empresaAsignada.setEnabled(false);
+            }
+
             panelEdicion.setVisible(true);
         }
     }
 
     private void limpiarFormulario() {
         binder.setBean(null);
+        empresaAsignada.setValue(null);
+        empresaAsignada.setEnabled(true); // Lo rehabilitamos para la próxima seleccion
         grid.asSingleSelect().clear();
-        guardar.getParent().get().getParent().get().setVisible(false);
+        panelEdicion.setVisible(false);
     }
 
     private void actualizarTabla() {
@@ -157,8 +182,7 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
         grid.addColumn(Lote::getUbicacion).setHeader("Ubicación");
         grid.addColumn(lote -> lote.getSuperficie() + " m²").setHeader("Superficie");
         grid.addColumn(Lote::getCaracteristicas).setHeader("Características");
-
-        // COLORES SEGÚN TUS NUEVOS TIPOS
+        
         grid.addComponentColumn(lote -> {
             com.vaadin.flow.component.html.Span badge = new com.vaadin.flow.component.html.Span(lote.getEstado().toString());
             badge.getElement().getThemeList().add("badge");

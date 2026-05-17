@@ -222,4 +222,10 @@ public class EmpresaService {
     public long contarSolicitudesPendientes() {
         return solicitudRepository.countByEstado(EstadoSolicitud.PENDIENTE);
     }
+
+    // Trae solo las empresas registradas que aun no tienen un lote asignado
+    @Transactional(readOnly = true)
+    public List<Empresa> listarAprobadasSinLote() {
+        return empresaRepository.findByLoteAsignadoIsNull();
+    }
 }

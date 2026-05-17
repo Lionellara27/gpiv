@@ -2,6 +2,8 @@ package com.unrn.gpiv.model;
 
 import com.unrn.gpiv.common.EstadoLote;
 import jakarta.persistence.*;
+
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -42,6 +44,9 @@ public class Lote {
     @JoinColumn(name = "empresa_id")
     private Empresa empresa;
 
+    @Column(name = "fechaAsignacion")  // fecha de asignacion del lote a la empresa
+    private LocalDate fechaAsignacion;
+
     //Logica
     public boolean isDisponible() {
         return EstadoLote.LIBRE.equals(this.estado) && this.empresa == null;
@@ -76,4 +81,12 @@ public class Lote {
 
     public Empresa getEmpresa() { return empresa; }
     public void setEmpresa(Empresa empresa) { this.empresa = empresa; }
+
+    public LocalDate getFechaAsignacion() {
+        return fechaAsignacion;
+    }
+
+    public void setFechaAsignacion(LocalDate fechaAsignacion) {
+        this.fechaAsignacion = fechaAsignacion;
+    }
 }
