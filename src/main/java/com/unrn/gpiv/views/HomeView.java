@@ -4,7 +4,6 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
@@ -17,46 +16,83 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 
-// Cargamos la tipografía elegante Montserrat y FontAwesome para el Footer
 @StyleSheet("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap")
 @StyleSheet("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css")
 @Route("")
 public class HomeView extends VerticalLayout {
 
     public HomeView() {
-        // Configuración general: fondo blanco limpio y ocupación total de pantalla
-        setSizeFull();
+        // Configuración de pantalla fluida
+        setWidthFull();
         setPadding(false);
         setSpacing(false);
-        getStyle().set("background-color", "#FFFFFF");
+        getStyle().set("background-color", "#FFFFFF").set("min-height", "100vh");
 
-        // ==========================================
-        // 🏛️ 1. HEADER INSTITUCIONAL (MENÚ HORIZONTAL TOTALMENTE CENTRADO)
-        // ==========================================
+        // Contenedor dinámico central
+        VerticalLayout mainContent = new VerticalLayout();
+        mainContent.setWidthFull();
+        mainContent.setJustifyContentMode(JustifyContentMode.CENTER);
+        mainContent.setAlignItems(Alignment.CENTER);
+        mainContent.getStyle().set("padding", "30px 20px");
+
+        // REMAKE: SECCIÓN DE TÍTULOS SUPERIORES
+
+        // Nombre completo subido arriba en VERDE Río Negro (#009A3B) y tipografía pesada
+        Span subtitulo = new Span("Sistema de Gestión del Parque Industrial de Viedma");
+        subtitulo.getStyle()
+                .set("font-size", "2.6em")
+                .set("letter-spacing", "0.5px")
+                .set("color", "#009A3B") // Combinando con la provincia
+                .set("font-weight", "900")
+                .set("text-align", "center")
+                .set("margin-top", "15px");
+
+        //Slogan institucional ubicado inmediatamente abajo
+        Paragraph desc = new Paragraph("Parque Industrial de Viedma — Motor Productivo de la Comarca");
+        desc.getStyle()
+                .set("color", "#0063BE") // #0063BE azul para que resalte, o #009A3B verde)
+                .set("font-size", "1.25em")
+                .set("font-weight", "500")
+                .set("margin-top", "5px");
+
+        //Frase de acción destacada e impactante con el tamaño anterior
+        Span preguntaText = new Span("¿Qué desea hacer hoy?");
+        preguntaText.getStyle()
+                .set("font-size", "2.2em")
+                .set("color", "#1A202C")
+                .set("font-weight", "800")
+                .set("margin-top", "35px")
+                .set("letter-spacing", "-0.5px");
+
+        // Contenedor de la botonera inferior
+        HorizontalLayout botonera = new HorizontalLayout();
+        botonera.getStyle().set("margin-top", "1.5em");
+        botonera.setWidthFull();
+        botonera.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        botonera.setAlignItems(FlexComponent.Alignment.START);
+        botonera.getStyle().set("gap", "40px");
+
+        // HEADER INSTITUCIONAL (MENÚ HORIZONTAL TOTALMENTE CENTRADO)
         HorizontalLayout header = new HorizontalLayout();
         header.setWidthFull();
-        header.setAlignItems(FlexComponent.Alignment.CENTER); // Nivele todo al medio verticalmente
+        header.setAlignItems(FlexComponent.Alignment.CENTER);
         header.getStyle()
                 .set("border-bottom", "1px solid #E2E8F0")
                 .set("padding", "15px 40px");
 
-
-        // Logo de ENREPAVI a la izquierda
         Image logo = new Image("images/Enrepavi.png", "Logo del Parque Industrial");
         logo.setHeight("120px");
 
-        // 🎯 Caja contenedora izquierda invisible para empujar el menú
         HorizontalLayout leftBox = new HorizontalLayout(logo);
         leftBox.setPadding(false); leftBox.setSpacing(false);
 
-        // Menú de Navegación Central Superior (Ícono a la izquierda, Texto a la derecha)
         HorizontalLayout navMenu = new HorizontalLayout();
         navMenu.setSpacing(true);
         navMenu.getStyle().set("gap", "25px");
 
         String[] menuItems = {"Inicio", "El Parque", "Ubicación", "Beneficios"};
         VaadinIcon[] menuIcons = {VaadinIcon.HOME, VaadinIcon.FACTORY, VaadinIcon.MAP_MARKER, VaadinIcon.BAR_CHART};
-        // 🎯 TRUCO 2: Clava el menú al centro absoluto de la pantalla de forma automática
+
         navMenu.getStyle()
                 .set("position", "absolute")
                 .set("left", "50%")
@@ -64,7 +100,7 @@ public class HomeView extends VerticalLayout {
 
         for (int i = 0; i < menuItems.length; i++) {
             HorizontalLayout itemLayout = new HorizontalLayout();
-            itemLayout.setAlignItems(FlexComponent.Alignment.CENTER); // Mantiene el ícono y texto nivelados
+            itemLayout.setAlignItems(FlexComponent.Alignment.CENTER);
             itemLayout.setSpacing(false);
             itemLayout.getStyle()
                     .set("color", "#4A5568")
@@ -72,15 +108,16 @@ public class HomeView extends VerticalLayout {
                     .set("transition", "color 0.2s, transform 0.2s");
 
             Icon icon = menuIcons[i].create();
-            icon.setSize("16px");
+            icon.setSize("20px"); //tamaño de iconos!!
             icon.getStyle().set("margin-right", "8px");
 
             Span navLink = new Span(menuItems[i]);
-            navLink.getStyle().set("font-weight", "600").set("font-size", "1.05em");
+            navLink.getStyle()
+                    .set("font-weight", "600")
+                    .set("font-size", "1.2em"); //tamaño de letras!
 
             itemLayout.add(icon, navLink);
 
-            // Efecto hover sutil
             itemLayout.getElement().addEventListener("mouseover", e -> {
                 itemLayout.getStyle().set("color", "#0063BE");
                 itemLayout.getStyle().set("transform", "translateY(-2px)");
@@ -90,64 +127,52 @@ public class HomeView extends VerticalLayout {
                 itemLayout.getStyle().set("transform", "translateY(0px)");
             });
 
+            //aca se cargan donde CLIQUEAS y te abre la pestaña seleccionada!
+            String itemText = menuItems[i];
+            itemLayout.getElement().addEventListener("click", e -> {
+                if ("El Parque".equals(itemText)) {
+                    mainContent.removeAll();
+                    mainContent.add(new ElParqueComponent());
+                }
+                else if ("Ubicación".equals(itemText)) {
+                    mainContent.removeAll();
+                    mainContent.add(new UbicacionComponent());
+                }
+                else if ("Beneficios".equals(itemText)) {
+                    mainContent.removeAll();
+                    mainContent.add(new BeneficiosComponent()); // Inyecta las cards fiscales premium
+                }
+                else if ("Inicio".equals(itemText)) {
+                    mainContent.removeAll();
+                    mainContent.add(subtitulo, desc, preguntaText, botonera);
+                }
+            });
+
             navMenu.add(itemLayout);
         }
 
-        // Logo de Río Negro a la derecha
         Image bandera = new Image("images/logo-rn.png", "Bandera de Río Negro");
         bandera.setHeight("90px");
         bandera.getStyle().set("border-radius", "6px").set("box-shadow", "0 4px 12px rgba(0, 0, 0, 0.08)");
 
-        // 🎯 Caja contenedora derecha invisible alineada al final
         HorizontalLayout rightBox = new HorizontalLayout(bandera);
         rightBox.setPadding(false); rightBox.setSpacing(false);
         rightBox.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
 
-        // Agregamos los tres bloques principales al Header
         header.add(leftBox, navMenu, rightBox);
-
-        // 🚀 LA MAGIA: Forzamos a los laterales a expandirse por igual, clavando el menú horizontal en el centro exacto
         header.setFlexGrow(1, leftBox);
         header.setFlexGrow(0, navMenu);
         header.setFlexGrow(1, rightBox);
 
-        // ==========================================
-        // 🎯 2. CUERPO CENTRAL (HERO SECTION CON NUEVAS CARDS SIMÉTRICAS)
-        // ==========================================
-        VerticalLayout mainContent = new VerticalLayout();
-        mainContent.setSizeFull();
-        mainContent.setJustifyContentMode(JustifyContentMode.CENTER);
-        mainContent.setAlignItems(Alignment.CENTER);
-        mainContent.getStyle().set("padding", "40px 20px");
-
-        H1 titulo = new H1("SGPIV");
-        titulo.getStyle().set("font-size", "6.5em").set("font-weight", "900").set("color", "#1A202C").set("margin", "0").set("letter-spacing", "-2px");
-
-        Span subtitulo = new Span("Sistema de Gestión del Parque Industrial de Viedma");
-        subtitulo.getStyle().set("font-size", "1.6em").set("letter-spacing", "4px").set("color", "#0063BE").set("font-weight", "700").set("text-align", "center");
-
-        Paragraph desc = new Paragraph("Parque Industrial de Viedma — Motor Productivo de la Comarca");
-        desc.getStyle().set("color", "#718096").set("font-size", "1.2em").set("margin-top", "10px");
-
-        // Contenedor principal de la botonera (Fuerza ancho total para centrado absoluto)
-        HorizontalLayout botonera = new HorizontalLayout();
-        botonera.getStyle().set("margin-top", "3em");
-        botonera.setWidthFull();
-        botonera.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        botonera.setAlignItems(FlexComponent.Alignment.START);
-        botonera.getStyle().set("gap", "40px");
-
+        //MAQUETADO DE TARJETAS (SIMÉTRICO)
         String baseTransition = "background-color 0.2s, box-shadow 0.2s, transform 0.1s ease-in-out";
 
-        // ------------------------------------------
-        // 🟢 CARD 1: INGRESO AL SISTEMA
-        // ------------------------------------------
         VerticalLayout cardIngreso = new VerticalLayout();
-        cardIngreso.setWidth("420px"); // Medida fija idéntica
+        cardIngreso.setWidth("420px");
         cardIngreso.setAlignItems(FlexComponent.Alignment.CENTER);
         cardIngreso.getStyle()
                 .set("border", "1px solid #E2E8F0")
-                .set("border-top", "5px solid #009A3B") // Línea superior Verde
+                .set("border-top", "5px solid #009A3B")
                 .set("border-radius", "12px")
                 .set("padding", "35px 25px")
                 .set("background-color", "#F8FAFC")
@@ -180,18 +205,14 @@ public class HomeView extends VerticalLayout {
             btnEntrar.getStyle().set("box-shadow", "0 6px 15px rgba(0, 154, 59, 0.25)");
             btnEntrar.getStyle().set("transform", "translateY(0px)");
         });
-
         cardIngreso.add(textTitleIngreso, textSubIngreso, btnEntrar);
 
-        // ------------------------------------------
-        // 🔵 CARD 2: NUEVOS PROYECTOS / REGISTRARSE
-        // ------------------------------------------
         VerticalLayout cardRegistro = new VerticalLayout();
-        cardRegistro.setWidth("420px"); // Medida fija idéntica para simetría
+        cardRegistro.setWidth("420px");
         cardRegistro.setAlignItems(FlexComponent.Alignment.CENTER);
         cardRegistro.getStyle()
                 .set("border", "1px solid #E2E8F0")
-                .set("border-top", "5px solid #0063BE") // Línea superior Azul
+                .set("border-top", "5px solid #0063BE")
                 .set("border-radius", "12px")
                 .set("padding", "35px 25px")
                 .set("background-color", "#F8FAFC")
@@ -224,16 +245,13 @@ public class HomeView extends VerticalLayout {
             btnSolicitar.getStyle().set("box-shadow", "0 6px 15px rgba(0, 99, 190, 0.25)");
             btnSolicitar.getStyle().set("transform", "translateY(0px)");
         });
-
         cardRegistro.add(textTitleRegistro, textSubRegistro, btnSolicitar);
 
-        // Ensamblamos las tarjetas en la botonera y al contenido general
+        // Ensamblado del nuevo orden visual inicial
         botonera.add(cardIngreso, cardRegistro);
-        mainContent.add(titulo, subtitulo, desc, botonera);
+        mainContent.add(subtitulo, desc, preguntaText, botonera);
 
-        // ==========================================
-        // 📢 3. BARRA DE NOVEDADES (MARQUEE EN SEGUNDO PLANO)
-        // ==========================================
+        // BARRA DE NOVEDADES (MARQUEE)
         HorizontalLayout barraAnuncios = new HorizontalLayout();
         barraAnuncios.setWidthFull();
         barraAnuncios.setHeight("55px");
@@ -271,18 +289,20 @@ public class HomeView extends VerticalLayout {
                         "document.head.appendChild(style);"
         );
 
-        // ==========================================
-        // 🏢 4. FOOTER ROBUSTO DARK (PORTALSUR SOFTWARE BRANDING)
-        // ==========================================
+
+        // FOOTER ROBUSTO DARK
         Div footerContainer = new Div();
         footerContainer.setWidthFull();
-        footerContainer.getStyle().set("background-color", "#1A202C").set("padding", "45px 60px").set("color", "#A0AEC0");
+        footerContainer.getStyle()
+                .set("background-color", "#1A202C")
+                .set("padding", "45px 60px")
+                .set("color", "#A0AEC0")
+                .set("box-sizing", "border-box");
 
         HorizontalLayout footerLayout = new HorizontalLayout();
         footerLayout.setWidthFull();
         footerLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
 
-        // Columna A: Datos de Contacto
         VerticalLayout colContacto = new VerticalLayout();
         colContacto.setPadding(false); colContacto.setSpacing(false);
         Span titleContacto = new Span("CONTACTO");
@@ -300,7 +320,6 @@ public class HomeView extends VerticalLayout {
             colContacto.add(row);
         }
 
-        // Columna B: Accesos Rápidos
         VerticalLayout colAccesos = new VerticalLayout();
         colAccesos.setPadding(false); colAccesos.setSpacing(false);
         Span titleAccesos = new Span("ACCESOS RÁPIDOS");
@@ -308,7 +327,6 @@ public class HomeView extends VerticalLayout {
         colAccesos.add(titleAccesos, new Span("» El Parque Industrial"), new Span("» Ubicación de Lotes"), new Span("» Beneficios y Leyes"));
         colAccesos.getChildren().forEach(c -> { if(c != titleAccesos) c.getElement().getStyle().set("margin-bottom", "5px").set("font-size", "0.95em"); });
 
-        // Columna C: Redes Sociales y Firma Corporativa
         VerticalLayout colSocial = new VerticalLayout();
         colSocial.setPadding(false); colSocial.setSpacing(false);
         Span titleSocial = new Span("SEGUINOS");
@@ -329,7 +347,6 @@ public class HomeView extends VerticalLayout {
         footerLayout.add(colContacto, colAccesos, colSocial);
         footerContainer.add(footerLayout);
 
-        // Ensamblado en capas verticales secuenciales
         add(header, mainContent, barraAnuncios, footerContainer);
     }
 }
