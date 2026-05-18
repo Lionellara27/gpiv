@@ -2,6 +2,343 @@ package com.unrn.gpiv.views;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dependency.StyleSheet;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.Route;
+
+// Imports para los íconos nativos de Vaadin 24
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+
+// Cargamos la tipografía elegante Montserrat y FontAwesome para el Footer
+@StyleSheet("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap")
+@StyleSheet("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css")
+@Route("")
+public class HomeView extends VerticalLayout {
+
+    public HomeView() {
+        // Configuración general: fondo blanco limpio y ocupación total de pantalla
+        setSizeFull();
+        setPadding(false);
+        setSpacing(false);
+        getStyle().set("background-color", "#FFFFFF");
+
+        // ==========================================
+        // 🏛️ 1. HEADER INSTITUCIONAL (MENÚ HORIZONTAL TOTALMENTE CENTRADO)
+        // ==========================================
+        HorizontalLayout header = new HorizontalLayout();
+        header.setWidthFull();
+        header.setAlignItems(FlexComponent.Alignment.CENTER); // Nivele todo al medio verticalmente
+        header.getStyle()
+                .set("border-bottom", "1px solid #E2E8F0")
+                .set("padding", "15px 40px");
+
+
+        // Logo de ENREPAVI a la izquierda
+        Image logo = new Image("images/Enrepavi.png", "Logo del Parque Industrial");
+        logo.setHeight("120px");
+
+        // 🎯 Caja contenedora izquierda invisible para empujar el menú
+        HorizontalLayout leftBox = new HorizontalLayout(logo);
+        leftBox.setPadding(false); leftBox.setSpacing(false);
+
+        // Menú de Navegación Central Superior (Ícono a la izquierda, Texto a la derecha)
+        HorizontalLayout navMenu = new HorizontalLayout();
+        navMenu.setSpacing(true);
+        navMenu.getStyle().set("gap", "25px");
+
+        String[] menuItems = {"Inicio", "El Parque", "Ubicación", "Beneficios"};
+        VaadinIcon[] menuIcons = {VaadinIcon.HOME, VaadinIcon.FACTORY, VaadinIcon.MAP_MARKER, VaadinIcon.BAR_CHART};
+        // 🎯 TRUCO 2: Clava el menú al centro absoluto de la pantalla de forma automática
+        navMenu.getStyle()
+                .set("position", "absolute")
+                .set("left", "50%")
+                .set("transform", "translateX(-50%)");
+
+        for (int i = 0; i < menuItems.length; i++) {
+            HorizontalLayout itemLayout = new HorizontalLayout();
+            itemLayout.setAlignItems(FlexComponent.Alignment.CENTER); // Mantiene el ícono y texto nivelados
+            itemLayout.setSpacing(false);
+            itemLayout.getStyle()
+                    .set("color", "#4A5568")
+                    .set("cursor", "pointer")
+                    .set("transition", "color 0.2s, transform 0.2s");
+
+            Icon icon = menuIcons[i].create();
+            icon.setSize("16px");
+            icon.getStyle().set("margin-right", "8px");
+
+            Span navLink = new Span(menuItems[i]);
+            navLink.getStyle().set("font-weight", "600").set("font-size", "1.05em");
+
+            itemLayout.add(icon, navLink);
+
+            // Efecto hover sutil
+            itemLayout.getElement().addEventListener("mouseover", e -> {
+                itemLayout.getStyle().set("color", "#0063BE");
+                itemLayout.getStyle().set("transform", "translateY(-2px)");
+            });
+            itemLayout.getElement().addEventListener("mouseout", e -> {
+                itemLayout.getStyle().set("color", "#4A5568");
+                itemLayout.getStyle().set("transform", "translateY(0px)");
+            });
+
+            navMenu.add(itemLayout);
+        }
+
+        // Logo de Río Negro a la derecha
+        Image bandera = new Image("images/logo-rn.png", "Bandera de Río Negro");
+        bandera.setHeight("90px");
+        bandera.getStyle().set("border-radius", "6px").set("box-shadow", "0 4px 12px rgba(0, 0, 0, 0.08)");
+
+        // 🎯 Caja contenedora derecha invisible alineada al final
+        HorizontalLayout rightBox = new HorizontalLayout(bandera);
+        rightBox.setPadding(false); rightBox.setSpacing(false);
+        rightBox.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+
+        // Agregamos los tres bloques principales al Header
+        header.add(leftBox, navMenu, rightBox);
+
+        // 🚀 LA MAGIA: Forzamos a los laterales a expandirse por igual, clavando el menú horizontal en el centro exacto
+        header.setFlexGrow(1, leftBox);
+        header.setFlexGrow(0, navMenu);
+        header.setFlexGrow(1, rightBox);
+
+        // ==========================================
+        // 🎯 2. CUERPO CENTRAL (HERO SECTION CON NUEVAS CARDS SIMÉTRICAS)
+        // ==========================================
+        VerticalLayout mainContent = new VerticalLayout();
+        mainContent.setSizeFull();
+        mainContent.setJustifyContentMode(JustifyContentMode.CENTER);
+        mainContent.setAlignItems(Alignment.CENTER);
+        mainContent.getStyle().set("padding", "40px 20px");
+
+        H1 titulo = new H1("SGPIV");
+        titulo.getStyle().set("font-size", "6.5em").set("font-weight", "900").set("color", "#1A202C").set("margin", "0").set("letter-spacing", "-2px");
+
+        Span subtitulo = new Span("Sistema de Gestión del Parque Industrial de Viedma");
+        subtitulo.getStyle().set("font-size", "1.6em").set("letter-spacing", "4px").set("color", "#0063BE").set("font-weight", "700").set("text-align", "center");
+
+        Paragraph desc = new Paragraph("Parque Industrial de Viedma — Motor Productivo de la Comarca");
+        desc.getStyle().set("color", "#718096").set("font-size", "1.2em").set("margin-top", "10px");
+
+        // Contenedor principal de la botonera (Fuerza ancho total para centrado absoluto)
+        HorizontalLayout botonera = new HorizontalLayout();
+        botonera.getStyle().set("margin-top", "3em");
+        botonera.setWidthFull();
+        botonera.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        botonera.setAlignItems(FlexComponent.Alignment.START);
+        botonera.getStyle().set("gap", "40px");
+
+        String baseTransition = "background-color 0.2s, box-shadow 0.2s, transform 0.1s ease-in-out";
+
+        // ------------------------------------------
+        // 🟢 CARD 1: INGRESO AL SISTEMA
+        // ------------------------------------------
+        VerticalLayout cardIngreso = new VerticalLayout();
+        cardIngreso.setWidth("420px"); // Medida fija idéntica
+        cardIngreso.setAlignItems(FlexComponent.Alignment.CENTER);
+        cardIngreso.getStyle()
+                .set("border", "1px solid #E2E8F0")
+                .set("border-top", "5px solid #009A3B") // Línea superior Verde
+                .set("border-radius", "12px")
+                .set("padding", "35px 25px")
+                .set("background-color", "#F8FAFC")
+                .set("box-shadow", "0 4px 15px rgba(0, 0, 0, 0.03)");
+
+        Span textTitleIngreso = new Span("Ingresar al sistema");
+        textTitleIngreso.getStyle().set("font-weight", "700").set("font-size", "1.4em").set("color", "#1A202C");
+
+        Span textSubIngreso = new Span("Para empresas ya radicadas y personal administrativo.");
+        textSubIngreso.getStyle().set("color", "#718096").set("font-size", "0.95em").set("text-align", "center").set("margin", "12px 0 25px 0").set("height", "40px");
+
+        Button btnEntrar = new Button("INGRESAR", e -> getUI().ifPresent(ui -> ui.navigate("login")));
+        btnEntrar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        btnEntrar.getStyle()
+                .set("background-color", "#009A3B")
+                .set("padding", "1.6em 0")
+                .set("font-weight", "700")
+                .set("font-size", "0.95em")
+                .set("border-radius", "50px")
+                .set("box-shadow", "0 6px 15px rgba(0, 154, 59, 0.25)")
+                .set("cursor", "pointer")
+                .set("width", "280px")
+                .set("transition", baseTransition);
+
+        btnEntrar.getElement().addEventListener("mouseover", e -> {
+            btnEntrar.getStyle().set("box-shadow", "0 10px 25px rgba(0, 154, 59, 0.4)");
+            btnEntrar.getStyle().set("transform", "translateY(-3px)");
+        });
+        btnEntrar.getElement().addEventListener("mouseout", e -> {
+            btnEntrar.getStyle().set("box-shadow", "0 6px 15px rgba(0, 154, 59, 0.25)");
+            btnEntrar.getStyle().set("transform", "translateY(0px)");
+        });
+
+        cardIngreso.add(textTitleIngreso, textSubIngreso, btnEntrar);
+
+        // ------------------------------------------
+        // 🔵 CARD 2: NUEVOS PROYECTOS / REGISTRARSE
+        // ------------------------------------------
+        VerticalLayout cardRegistro = new VerticalLayout();
+        cardRegistro.setWidth("420px"); // Medida fija idéntica para simetría
+        cardRegistro.setAlignItems(FlexComponent.Alignment.CENTER);
+        cardRegistro.getStyle()
+                .set("border", "1px solid #E2E8F0")
+                .set("border-top", "5px solid #0063BE") // Línea superior Azul
+                .set("border-radius", "12px")
+                .set("padding", "35px 25px")
+                .set("background-color", "#F8FAFC")
+                .set("box-shadow", "0 4px 15px rgba(0, 0, 0, 0.03)");
+
+        Span textTitleRegistro = new Span("Nuevos proyectos / Registrarse");
+        textTitleRegistro.getStyle().set("font-weight", "700").set("font-size", "1.4em").set("color", "#1A202C");
+
+        Span textSubRegistro = new Span("Para emprendedores que buscan solicitar su primer lote.");
+        textSubRegistro.getStyle().set("color", "#718096").set("font-size", "0.95em").set("text-align", "center").set("margin", "12px 0 25px 0").set("height", "40px");
+
+        Button btnSolicitar = new Button("SOLICITAR LOTE", e -> getUI().ifPresent(ui -> ui.navigate("registro")));
+        btnSolicitar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        btnSolicitar.getStyle()
+                .set("background-color", "#0063BE")
+                .set("padding", "1.6em 0")
+                .set("font-weight", "700")
+                .set("font-size", "0.95em")
+                .set("border-radius", "50px")
+                .set("box-shadow", "0 6px 15px rgba(0, 99, 190, 0.25)")
+                .set("cursor", "pointer")
+                .set("width", "280px")
+                .set("transition", baseTransition);
+
+        btnSolicitar.getElement().addEventListener("mouseover", e -> {
+            btnSolicitar.getStyle().set("box-shadow", "0 10px 25px rgba(0, 99, 190, 0.4)");
+            btnSolicitar.getStyle().set("transform", "translateY(-3px)");
+        });
+        btnSolicitar.getElement().addEventListener("mouseout", e -> {
+            btnSolicitar.getStyle().set("box-shadow", "0 6px 15px rgba(0, 99, 190, 0.25)");
+            btnSolicitar.getStyle().set("transform", "translateY(0px)");
+        });
+
+        cardRegistro.add(textTitleRegistro, textSubRegistro, btnSolicitar);
+
+        // Ensamblamos las tarjetas en la botonera y al contenido general
+        botonera.add(cardIngreso, cardRegistro);
+        mainContent.add(titulo, subtitulo, desc, botonera);
+
+        // ==========================================
+        // 📢 3. BARRA DE NOVEDADES (MARQUEE EN SEGUNDO PLANO)
+        // ==========================================
+        HorizontalLayout barraAnuncios = new HorizontalLayout();
+        barraAnuncios.setWidthFull();
+        barraAnuncios.setHeight("55px");
+        barraAnuncios.getStyle()
+                .set("background-color", "#F7FAFC")
+                .set("border-top", "1px solid #E2E8F0")
+                .set("border-bottom", "1px solid #E2E8F0")
+                .set("overflow", "hidden")
+                .set("position", "relative")
+                .set("align-items", "center");
+
+        Div marqueeEngine = new Div();
+        marqueeEngine.getStyle().set("display", "flex").set("width", "max-content").set("animation", "marqueeLoop 35s linear infinite");
+
+        String[] novedades = {
+                "📢 CONVOCATORIA ABIERTA: Presentación de Proyectos Productivos para el período 2026.",
+                "🏭 RADICACIÓN EMPRESARIAL: La firma 'Alimentos Patagónicos' comenzó el movimiento de suelos en el Lote 14.",
+                "⚡ INFRAESTRUCTURA MUNICIPAL: Finalizaron las obras de extensión de la red de gas de alta presión en el Sector B.",
+                "🌱 REQUERIMIENTO AMBIENTAL: Se recuerda a las empresas radicadas presentar la declaración semestral de impacto.",
+                "🤝 ENREPAVI INFORMA: Nueva mesa de asistencia técnica digital disponible para pymes industriales de la comarca."
+        };
+
+        for (int i = 0; i < 2; i++) {
+            for (String texto : novedades) {
+                Span item = new Span(texto);
+                item.getStyle().set("padding", "0 50px").set("font-weight", "600").set("color", "#4A5568").set("white-space", "nowrap");
+                marqueeEngine.add(item);
+            }
+        }
+
+        barraAnuncios.add(marqueeEngine);
+        marqueeEngine.getElement().executeJs(
+                "const style = document.createElement('style');" +
+                        "style.textContent = '@keyframes marqueeLoop { 0% { transform: translateX(0%); } 100% { transform: translateX(-50%); } }';" +
+                        "document.head.appendChild(style);"
+        );
+
+        // ==========================================
+        // 🏢 4. FOOTER ROBUSTO DARK (PORTALSUR SOFTWARE BRANDING)
+        // ==========================================
+        Div footerContainer = new Div();
+        footerContainer.setWidthFull();
+        footerContainer.getStyle().set("background-color", "#1A202C").set("padding", "45px 60px").set("color", "#A0AEC0");
+
+        HorizontalLayout footerLayout = new HorizontalLayout();
+        footerLayout.setWidthFull();
+        footerLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+
+        // Columna A: Datos de Contacto
+        VerticalLayout colContacto = new VerticalLayout();
+        colContacto.setPadding(false); colContacto.setSpacing(false);
+        Span titleContacto = new Span("CONTACTO");
+        titleContacto.getStyle().set("color", "#FFFFFF").set("font-weight", "700").set("margin-bottom", "12px");
+        colContacto.add(titleContacto);
+
+        String[] infoContacto = {
+                "<span style='font-size:0.95em; margin-bottom:5px; display:inline-block;'><i class='fa fa-envelope' style='color:#009A3B;margin-right:8px'></i>admin@viedma.gov.ar</span>",
+                "<span style='font-size:0.95em; margin-bottom:5px; display:inline-block;'><i class='fa fa-phone' style='color:#009A3B;margin-right:8px'></i>+54 (2920) 431400</span>",
+                "<span style='font-size:0.95em; margin-bottom:5px; display:inline-block;'><i class='fa fa-map-marker-alt' style='color:#009A3B;margin-right:8px'></i>Viedma, Río Negro</span>"
+        };
+        for (String htmlText : infoContacto) {
+            Span row = new Span();
+            row.getElement().setProperty("innerHTML", htmlText);
+            colContacto.add(row);
+        }
+
+        // Columna B: Accesos Rápidos
+        VerticalLayout colAccesos = new VerticalLayout();
+        colAccesos.setPadding(false); colAccesos.setSpacing(false);
+        Span titleAccesos = new Span("ACCESOS RÁPIDOS");
+        titleAccesos.getStyle().set("color", "#FFFFFF").set("font-weight", "700").set("margin-bottom", "12px");
+        colAccesos.add(titleAccesos, new Span("» El Parque Industrial"), new Span("» Ubicación de Lotes"), new Span("» Beneficios y Leyes"));
+        colAccesos.getChildren().forEach(c -> { if(c != titleAccesos) c.getElement().getStyle().set("margin-bottom", "5px").set("font-size", "0.95em"); });
+
+        // Columna C: Redes Sociales y Firma Corporativa
+        VerticalLayout colSocial = new VerticalLayout();
+        colSocial.setPadding(false); colSocial.setSpacing(false);
+        Span titleSocial = new Span("SEGUINOS");
+        titleSocial.getStyle().set("color", "#FFFFFF").set("font-weight", "700").set("margin-bottom", "12px");
+
+        Span redesSpan = new Span();
+        redesSpan.getElement().setProperty("innerHTML",
+                "<i class='fab fa-facebook' style='font-size:24px;cursor:pointer;margin-right:15px'></i>" +
+                        "<i class='fab fa-instagram' style='font-size:24px;cursor:pointer;margin-right:15px'></i>" +
+                        "<i class='fab fa-linkedin' style='font-size:24px;cursor:pointer'></i>"
+        );
+
+        Span copyright = new Span("© 2026 SGPIV - PortalSurSoftware");
+        copyright.getStyle().set("margin-top", "25px").set("font-size", "0.9em").set("color", "#718096").set("font-weight", "bold");
+
+        colSocial.add(titleSocial, redesSpan, copyright);
+
+        footerLayout.add(colContacto, colAccesos, colSocial);
+        footerContainer.add(footerLayout);
+
+        // Ensamblado en capas verticales secuenciales
+        add(header, mainContent, barraAnuncios, footerContainer);
+    }
+}
+
+/*FUNCIONA MUY MUY BIEN PERO QUIERO VER SI SE PUEDE MEJORAR
+package com.unrn.gpiv.views;
+
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Image;
@@ -101,11 +438,73 @@ public class HomeView extends VerticalLayout {
         footer.setWidthFull();
         footer.setHeight("10px");
         footer.getStyle().set("background-color", "#000000");
+// --- 2.5 SECCIÓN DE NOVEDADES / ANUNCIOS (Marquee Automático) ---
+        HorizontalLayout barraAnuncios = new HorizontalLayout();
+        barraAnuncios.setWidthFull();
+        barraAnuncios.setHeight("60px");
+        barraAnuncios.getStyle()
+                .set("background-color", "#F5F7FA") // Gris claro sutil
+                .set("border-top", "2px solid #0063BE") // Línea superior con el azul de Río Negro
+                .set("overflow", "hidden") // Esconde lo que se sale de la pantalla
+                .set("position", "relative")
+                .set("align-items", "center");
+
+        // El contenedor contenedor móvil que se va a desplazar
+        Div marqueeEngine = new Div();
+        marqueeEngine.getStyle()
+                .set("display", "flex")
+                .set("width", "max-content")
+                .set("animation", "marqueeLoop 30s linear infinite"); // ⏱️ Velocidad del desplazamiento
+
+        // Lista de novedades del Parque Industrial de Viedma
+        String[] novedades = {
+                "📢 CONVOCATORIA ABIERTA: Presentación de Proyectos Productivos para el período 2026.",
+                "🏭 RADICACIÓN EMPRESARIAL: La firma 'Alimentos Patagónicos' comenzó el movimiento de suelos en el Lote 14.",
+                "⚡ INFRAESTRUCTURA MUNICIPAL: Finalizaron las obras de extensión de la red de gas de alta presión en el Sector B.",
+                "🌱 REQUERIMIENTO AMBIENTAL: Se recuerda a las empresas radicadas presentar la declaración semestral de impacto.",
+                "🤝 ENREPAVI INFORMA: Nueva mesa de asistencia técnica digital disponible para pymes industriales de la comarca."
+        };
+
+        // Cargamos los anuncios en la barra
+        for (String texto : novedades) {
+            Span item = new Span(texto);
+            item.getStyle()
+                    .set("padding", "0 60px") // Separación generosa entre anuncio y anuncio
+                    .set("font-weight", "600")
+                    .set("color", "#2D3748") // Gris oscuro profesional
+                    .set("white-space", "nowrap")
+                    .set("font-size", "1.05em");
+            marqueeEngine.add(item);
+        }
+
+        // Duplicamos los anuncios atrás para que el bucle infinito sea fluido y no se corte nunca
+        for (String texto : novedades) {
+            Span item = new Span(texto);
+            item.getStyle()
+                    .set("padding", "0 60px")
+                    .set("font-weight", "600")
+                    .set("color", "#2D3748")
+                    .set("white-space", "nowrap")
+                    .set("font-size", "1.05em");
+            marqueeEngine.add(item);
+        }
+
+        barraAnuncios.add(marqueeEngine);
+
+        // 🚀 LA MAGIA: Inyectamos dinámicamente la animación CSS al navegador en microsegundos
+        marqueeEngine.getElement().executeJs(
+                "const style = document.createElement('style');" +
+                        "style.textContent = '@keyframes marqueeLoop { 0% { transform: translateX(0%); } 100% { transform: translateX(-50%); } }';" +
+                        "document.head.appendChild(style);"
+        );
 
         // Sumamos TODO a la pantalla (incluido el header con el logo)
         add(header, mainContent, footer);
     }
-}
+}*/
+
+
+
 /*funciona perrfecto este home view!
 package com.unrn.gpiv.views;
 
