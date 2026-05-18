@@ -71,7 +71,13 @@ public class EvaluarSolicitudesView extends VerticalLayout {
             }
             filtrarGrilla();
         });
-
+        //esta columna es para que se vea la fecha!
+        grid.addColumn(s -> s.getFechaCreacion() != null ?
+                        s.getFechaCreacion().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "-")
+                .setHeader("Fecha")
+                .setSortable(true)
+                .setAutoWidth(true);
+        //columnas de abajo ya andan!
         grid.addColumn(SolicitudRadicacion::getRazonSocialPretendida).setHeader("Razón Social").setSortable(true).setAutoWidth(true);
         grid.addColumn(s -> s.getProyecto() != null ? s.getProyecto().getActividadPrincipal() : "Sin especificar").setHeader("Actividad Principal").setAutoWidth(true);
         grid.addComponentColumn(this::crearBadgeEstado).setHeader("Estado Actual").setAutoWidth(true);
@@ -101,6 +107,51 @@ public class EvaluarSolicitudesView extends VerticalLayout {
     private HorizontalLayout crearBotoneraAcciones(SolicitudRadicacion solicitud) {
         HorizontalLayout layout = new HorizontalLayout();
 
+
+        // --- BOTÓN DE VER DETALLES (El ojo) ---
+        Button btnVerDetalles = new Button(VaadinIcon.EYE.create());
+        btnVerDetalles.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+
+        btnVerDetalles.addClickListener(e -> {
+            // 1. Cambia el estado en la base de datos en segundo plano
+            empresaService.marcarComoEnEvaluacion(solicitud.getId());
+
+            // 🚀 LA MAGIA: Actualizamos el estado local del objeto y refrescamos SOLO esta fila
+            solicitud.setEstado(com.unrn.gpiv.common.EstadoSolicitud.EN_EVALUACION);
+            grid.getDataProvider().refreshItem(solicitud);
+
+            // 2. Abre el cartel al instante sin esperar a recargar la tabla entera
+            abrirDetallesSolicitud(solicitud);
+        });
+
+        layout.add(btnVerDetalles);
+
+        // --- DESCARGA PDF ---
+        if (solicitud.getProyecto() != null && solicitud.getProyecto().getPdfProyecto() != null) {
+            StreamResource resource = new StreamResource(
+                    solicitud.getProyecto().getNombreArchivoPdf() != null ? solicitud.getProyecto().getNombreArchivoPdf() : "proyecto.pdf",
+                    () -> new ByteArrayInputStream(solicitud.getProyecto().getPdfProyecto())
+            );
+            Anchor linkDescarga = new Anchor(resource, "");
+            linkDescarga.getElement().setAttribute("download", true);
+
+            Button btnPdf = new Button(VaadinIcon.DOWNLOAD.create());
+            btnPdf.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+            // Optimizado también para el botón del PDF:
+            btnPdf.addClickListener(e -> {
+                empresaService.marcarComoEnEvaluacion(solicitud.getId());
+
+                // Refresca solo la fila en vez de romper la grilla antes de descargar
+                solicitud.setEstado(com.unrn.gpiv.common.EstadoSolicitud.EN_EVALUACION);
+                grid.getDataProvider().refreshItem(solicitud);
+            });
+
+            linkDescarga.add(btnPdf);
+            layout.add(linkDescarga);
+        }
+
+        /* BOTON DEL OJO Y PDF VIEJOS ANDAN BIEN PERO SON MUY LENTOS!!!!!!!!----------------------------------
         // --- BOTÓN DE VER DETALLES (El ojo) ---
         Button btnVerDetalles = new Button(VaadinIcon.EYE.create());
         btnVerDetalles.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
@@ -135,6 +186,7 @@ public class EvaluarSolicitudesView extends VerticalLayout {
             linkDescarga.add(btnPdf);
             layout.add(linkDescarga);
         }
+        ---------------------------------------------------------------------------------------------- */
 
         // Acciones de Aprobación/Rechazo (Solo si está PENDIENTE o EN_EVALUACION)
         if (solicitud.getEstado() == EstadoSolicitud.PENDIENTE || solicitud.getEstado() == EstadoSolicitud.EN_EVALUACION) {
@@ -152,6 +204,7 @@ public class EvaluarSolicitudesView extends VerticalLayout {
 
             Button btnRechazar = new Button(VaadinIcon.CLOSE.create(), e -> {
                 solicitud.setEstado(EstadoSolicitud.RECHAZADA);
+                solicitud.setFechaResolucion(java.time.LocalDateTime.now()); // dice a que hora se rechazo!
                 solicitudRepo.save(solicitud);
                 Notification.show("Solicitud rechazada.");
                 filtrarGrilla();

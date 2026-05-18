@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -136,6 +137,7 @@ public class EmpresaService {
 
         return empresaRepository.save(nuevaEmpresa);
     }*/
+
     @Transactional
     public Empresa aprobarRadicacion(Long solicitudId) {
         SolicitudRadicacion solicitud = solicitudRepository.findById(solicitudId)
@@ -148,10 +150,10 @@ public class EmpresaService {
         nuevaEmpresa.setTitulada(false); //falta la escritura
 
         solicitud.setEstado(EstadoSolicitud.APROBADA);
+        solicitud.setFechaResolucion(LocalDateTime.now()); // agregamos esto para saber la fecha exacta !!!!!
 
         return empresaRepository.save(nuevaEmpresa);
     }
-
 
     // --- NUEVO MÉTODO DE AUTENTICACIÓN GENERAL ---
     public Usuario loginGeneral(String username, String password) {

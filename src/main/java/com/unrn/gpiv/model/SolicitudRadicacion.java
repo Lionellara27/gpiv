@@ -13,7 +13,8 @@ public class SolicitudRadicacion {
     private Long id;
 
     private String razonSocialPretendida;
-    private LocalDateTime fechaCreacion = LocalDateTime.now();
+    private LocalDateTime fechaCreacion = LocalDateTime.now(); // fecha que entra
+    private LocalDateTime fechaResolucion; //hay que esperar fecha donde se "audita"
 
     @Enumerated(EnumType.STRING)
     private EstadoSolicitud estado = EstadoSolicitud.PENDIENTE;
@@ -53,6 +54,14 @@ public class SolicitudRadicacion {
 
     public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
+    }
+
+    public LocalDateTime getFechaResolucion() {
+        return fechaResolucion;
+    }
+
+    public void setFechaResolucion(LocalDateTime fechaResolucion) {
+        this.fechaResolucion = fechaResolucion;
     }
 
     public EstadoSolicitud getEstado() {
