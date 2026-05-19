@@ -152,7 +152,7 @@ public class HomeView extends VerticalLayout {
         }
 
         Image bandera = new Image("images/logo-rn.png", "Bandera de Río Negro");
-        bandera.setHeight("90px");
+        bandera.setHeight("80px");
         bandera.getStyle().set("border-radius", "6px").set("box-shadow", "0 4px 12px rgba(0, 0, 0, 0.08)");
 
         HorizontalLayout rightBox = new HorizontalLayout(bandera);
