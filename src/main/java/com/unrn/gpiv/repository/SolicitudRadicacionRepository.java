@@ -12,7 +12,7 @@ import java.util.List;
 public interface SolicitudRadicacionRepository extends JpaRepository<SolicitudRadicacion, Long> {
 
 
-    // --- NUEVO: Para contar cuántas hay en un estado específico ---
+    //NUEVO: Para contar cuántas hay en un estado específico aprobado lo que sea
     long countByEstado(EstadoSolicitud estado);
 
     //Para que el Admin vea solo lo que tiene que evaluar

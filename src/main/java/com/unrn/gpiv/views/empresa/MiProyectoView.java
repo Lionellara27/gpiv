@@ -88,6 +88,14 @@ public class MiProyectoView extends VerticalLayout {
         acciones.add(btnModificar);
         configurarBotonPDF(acciones, proyecto, logueado);
 
+        //parte nueva para gestionar "mi empresa"
+        if (estado == EstadoSolicitud.APROBADA) {
+            Button btnIrAEmpresa = new Button("Completar Registro Empresa", VaadinIcon.BUILDING.create());
+            btnIrAEmpresa.addThemeVariants(ButtonVariant.LUMO_SUCCESS); // Verde de éxito
+            btnIrAEmpresa.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("mi-empresa")));
+            acciones.add(btnIrAEmpresa);
+        }
+
         statusCard.add(sub, badgeEstado, infoEstado, acciones);
 
         // --- RESUMEN DE DATOS ---
@@ -158,7 +166,8 @@ public class MiProyectoView extends VerticalLayout {
         return switch (estado) {
             case PENDIENTE -> "Tu solicitud fue recibida. Podés editarla hasta que comience la evaluación.";
             case EN_EVALUACION -> "El Directorio está analizando tu proyecto. Ya no es posible modificarlo.";
-            case APROBADA -> "¡Felicidades! Tu proyecto fue aprobado. El Parque se contactará para la asignación.";
+            //case APROBADA -> "¡Felicidades! Tu proyecto fue aprobado. El Parque se contactará para la asignación.";
+            case APROBADA -> "¡Felicidades! Tu proyecto fue aprobado. Ahora completá los datos finales de tu empresa para entrar en la cola de asignación de lotes.";
             case RECHAZADA -> "Tu solicitud ha sido rechazada. Por favor, revisá tu correo para ver las observaciones.";
         };
     }

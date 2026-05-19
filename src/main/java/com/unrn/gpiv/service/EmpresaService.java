@@ -23,19 +23,12 @@ public class EmpresaService {
     @Autowired
     private ProyectoProductivoRepository proyectoRepository;
     @Autowired
-    private UsuarioRepository usuarioRepository; // <--- AGREGÁ ESTA LÍNEA
+    private UsuarioRepository usuarioRepository;
 
-    /*
+
     @Transactional
     public RepresentanteEmpresa registrarRepresentante(RepresentanteEmpresa rep) {
-        //falta encriptar la contraseña antes de guardar
-        // rep.setPassword(passwordEncoder.encode(rep.getPassword()));
-        return representanteRepository.save(rep);
-    }*/
-    // cositas NEWWWWWWWWW 12/05
-    @Transactional
-    public RepresentanteEmpresa registrarRepresentante(RepresentanteEmpresa rep) {
-        // 1. CHEQUEO DE EMAIL (El que evita el bug de Mariano)
+        // 1. CHEQUEO DE EMAIL (El que evita el bug de correo YA usado Y GUARDADO)
         // Usamos usuarioRepository porque el mail está en la clase madre 'Usuario'
         if (usuarioRepository.existsByEmail(rep.getEmail())) {
             throw new IllegalArgumentException("Este correo electrónico ya está registrado. Por favor, iniciá sesión.");
@@ -62,44 +55,6 @@ public class EmpresaService {
             throw new IllegalArgumentException("Error de base de datos: Algunos de los datos ya existen.");
         }
     }
-    /* nuevo pero 11/05
-    @Transactional
-    public RepresentanteEmpresa registrarRepresentante(RepresentanteEmpresa rep) {
-        // 1. PREVENCIÓN: Evitás el choque antes de que ocurra.
-        // Como el username es el email, este frena el duplicado de cuenta.
-        if (representanteRepository.existsByUsername(rep.getUsername())) {
-            throw new IllegalArgumentException("Ya existe una cuenta con este correo.");
-        }
-
-        // Aprovechamos que agregaste los otros métodos al Repository para dejarlo blindado:
-        if (representanteRepository.existsByDni(rep.getDni())) {
-            throw new IllegalArgumentException("Ya existe un usuario registrado con este DNI.");
-        }
-
-        if (representanteRepository.existsByCuitPersonal(rep.getCuitPersonal())) {
-            throw new IllegalArgumentException("Este CUIT ya está vinculado a otra cuenta.");
-        }
-
-        try {
-            return representanteRepository.save(rep);
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            // 2. DEFENSA: Por si falla la prevención (ej: dos registros al mismo milisegundo)
-            throw new IllegalArgumentException("Error de duplicado: Los datos ya existen en el sistema.");
-        }
-    }
-    */
-
-    //El representante envia proyecto
-/*@Transactional
-    public void recibirSolicitud(ProyectoProductivo proyecto, RepresentanteEmpresa rep, String razonSocial) {
-        SolicitudRadicacion solicitud = new SolicitudRadicacion();
-        solicitud.setProyecto(proyecto);
-        solicitud.setRepresentante(rep);
-        solicitud.setRazonSocialPretendida(razonSocial);
-
-        solicitudRepository.save(solicitud);
-    }*/
-    // El representante envia proyecto
     @Transactional
     public void recibirSolicitud(ProyectoProductivo proyecto, RepresentanteEmpresa rep, String razonSocial) {
 
@@ -121,23 +76,6 @@ public class EmpresaService {
         solicitudRepository.save(solicitud);
     }
 
-    //El Admin aprueba y se crea la empresa
-    /*@Transactional
-    public Empresa aprobarRadicacion(Long solicitudId) {
-        SolicitudRadicacion solicitud = solicitudRepository.findById(solicitudId)
-                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
-
-        Empresa nuevaEmpresa = new Empresa();
-        nuevaEmpresa.setRazonSocial(solicitud.getRazonSocialPretendida());
-        nuevaEmpresa.setRepresentante(solicitud.getRepresentante());
-        nuevaEmpresa.setProyecto(solicitud.getProyecto());
-        nuevaEmpresa.setTitulada(false); //falta la escritura
-
-        solicitud.setEstado(EstadoSolicitud.APROBADA);
-
-        return empresaRepository.save(nuevaEmpresa);
-    }*/
-
     @Transactional
     public Empresa aprobarRadicacion(Long solicitudId) {
         SolicitudRadicacion solicitud = solicitudRepository.findById(solicitudId)
@@ -155,20 +93,20 @@ public class EmpresaService {
         return empresaRepository.save(nuevaEmpresa);
     }
 
-    // --- NUEVO MÉTODO DE AUTENTICACIÓN GENERAL ---
+    //NUEVO MÉTODO DE AUTENTICACIÓN GENERAL
     public Usuario loginGeneral(String username, String password) {
         return usuarioRepository.findByUsername(username)
                 .filter(u -> u.getPassword().equals(password))
                 .orElseThrow(() -> new RuntimeException("Credenciales inválidas"));
     }
 
-    // --- NUEVO: Para que Mariano pueda ver su proyecto al loguearse ---
+    //NUEVO: Para que el USUARIO pueda ver su proyecto al loguearse
     @Transactional(readOnly = true)
     public Empresa obtenerEmpresaPorRepresentante(RepresentanteEmpresa rep) {
         return empresaRepository.findByRepresentante(rep).orElse(null);
     }
 
-    // En EmpresaService.java
+    //Se hace el login de representante con email y pass! para luego entrar como usuario
     public RepresentanteEmpresa login(String email, String password) {
         // Buscamos por email (o username, según como lo guardes)
         return representanteRepository.findByEmail(email)
@@ -176,7 +114,7 @@ public class EmpresaService {
                 .orElseThrow(() -> new RuntimeException("Usuario o password inválidos"));
     }
 
-    // --- MÉTODO CLAVE PARA EL BUG GRANDE ---
+    // MÉTODO para ver solicitudes de radicacion!
     @Transactional(readOnly = true)
     public SolicitudRadicacion obtenerUltimaSolicitud(RepresentanteEmpresa rep) {
         // Usamos el repository que ya tenés para buscar por el ID del representante
@@ -196,7 +134,7 @@ public class EmpresaService {
                 .orElseThrow(() -> new RuntimeException("No encontré la solicitud con ID: " + id));
     }
 
-    // 2. Para guardar los cambios cuando Mariano termina de editar
+    // 2. Para guardar los cambios cuando el usuario termina de editar
     @Transactional
     public void actualizarSolicitud(SolicitudRadicacion solicitud) {
         // Como la solicitud ya tiene un ID, el .save() de Spring se da cuenta

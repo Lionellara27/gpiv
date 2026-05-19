@@ -1,6 +1,138 @@
 package com.unrn.gpiv.views;
 
 import com.unrn.gpiv.common.Rol;
+import com.unrn.gpiv.common.EstadoSolicitud;
+import com.unrn.gpiv.common.EstadoEmpresa;
+import com.unrn.gpiv.model.SolicitudRadicacion;
+import com.unrn.gpiv.model.Usuario;
+import com.unrn.gpiv.model.RepresentanteEmpresa;
+import com.unrn.gpiv.service.EmpresaService;
+import com.unrn.gpiv.views.admin.*;
+import com.unrn.gpiv.views.empresa.*;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.applayout.AppLayout;
+import com.vaadin.flow.component.applayout.DrawerToggle;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.RouterLink;
+import com.vaadin.flow.server.VaadinSession;
+import com.vaadin.flow.theme.lumo.LumoUtility;
+import org.springframework.beans.factory.annotation.Autowired;
+
+public class MainLayout extends AppLayout {
+
+    private final EmpresaService empresaService;
+
+    @Autowired
+    public MainLayout(EmpresaService empresaService) {
+        this.empresaService = empresaService;
+        createHeader();
+        createDrawer();
+    }
+
+    private void createHeader() {
+        H1 logo = new H1("SGPIV - Viedma");
+        logo.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.MEDIUM, LumoUtility.TextColor.PRIMARY);
+
+        DrawerToggle toggle = new DrawerToggle();
+
+        Button btnLogout = new Button("Salir", VaadinIcon.SIGN_OUT.create(), e -> {
+            VaadinSession.getCurrent().setAttribute("usuarioLogueado", null);
+            VaadinSession.getCurrent().close();
+            VaadinSession.getCurrent().getSession().invalidate();
+            UI.getCurrent().getPage().setLocation("login");
+        });
+
+        btnLogout.addClassNames(LumoUtility.Margin.Left.AUTO, LumoUtility.Margin.Right.MEDIUM);
+
+        var header = new HorizontalLayout(toggle, logo, btnLogout);
+        header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
+        header.setWidthFull();
+        header.addClassNames(LumoUtility.Padding.Vertical.NONE, LumoUtility.Padding.Horizontal.MEDIUM);
+
+        addToNavbar(header);
+    }
+
+    private void createDrawer() {
+        VerticalLayout menu = new VerticalLayout();
+
+        Usuario usuario = (Usuario) VaadinSession.getCurrent().getAttribute("usuarioLogueado");
+
+        if (usuario == null) return;
+
+        // =====================================================================
+        // 🛡️ SECCIÓN 1: ROL ADMINISTRADOR (ENREPAVI)
+        // =====================================================================
+        if (usuario.getRol() == Rol.ADMIN) {
+            Span adminSection = new Span("ADMINISTRACIÓN");
+            adminSection.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Top.MEDIUM);
+
+            menu.add(adminSection);
+            menu.add(crearLink(AdminDashboardView.class, VaadinIcon.CHART_LINE, " Dashboard"));
+            menu.add(crearLink(AdminLotesView.class, VaadinIcon.MAP_MARKER, " Gestión de Lotes"));
+            menu.add(crearLink(InformesEmpresasView.class, VaadinIcon.CHART_3D, " Informe de Empresas"));
+            menu.add(crearLink(EvaluarSolicitudesView.class, VaadinIcon.CHECK_SQUARE_O, " Evaluar Solicitudes"));
+            menu.add(crearLink(InventarioView.class, VaadinIcon.TOOLS, " Gestión de Inventario"));
+        }
+
+        // =====================================================================
+        // 🏢 SECCIÓN 2: ROL EMPRESA (MENÚ DINÁMICO REACTIVO)
+        // =====================================================================
+        if (usuario.getRol() == Rol.EMPRESA && usuario instanceof RepresentanteEmpresa logueado) {
+
+            Span empresaSection = new Span("ADMINISTRACIÓN\n");
+            empresaSection.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Top.MEDIUM);
+            menu.add(empresaSection);
+
+            menu.add(crearLink(MiProyectoView.class, VaadinIcon.FACTORY, " Mi Proyecto"));
+
+            SolicitudRadicacion solicitud = empresaService.obtenerUltimaSolicitud(logueado);
+
+            if (solicitud != null) {
+                if (solicitud.getEstado() == EstadoSolicitud.APROBADA) {
+                    menu.add(crearLink(MiEmpresaView.class, VaadinIcon.BUILDING, " Mi Empresa"));
+                }
+
+                if (logueado.getEmpresa() != null && logueado.getEmpresa().getLoteAsignado() != null) {
+
+                    Span operacionesSection = new Span("OPERACIONES INDUSTRIALES");
+                    operacionesSection.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Top.MEDIUM);
+                    menu.add(operacionesSection);
+
+                    menu.add(crearLink(AvancesObraView.class, VaadinIcon.CLIPBOARD_CHECK, " Avances de Obra"));
+                    menu.add(crearLink(ControlPersonalView.class, VaadinIcon.USERS, " Control de Personal"));
+                    menu.add(crearLink(FlotaVehiculosView.class, VaadinIcon.TRUCK, " Flota de Vehículos"));
+                    menu.add(crearLink(MedicionConsumosView.class, VaadinIcon.DASHBOARD, " Medición de Consumos"));
+                }
+            }
+        }
+
+        // 🟢 ARREGLADO: El menú se agrega al contenedor lateral y cerramos el método limpiamente
+        addToDrawer(menu);
+    }
+
+    // 🟢 ARREGLADO: El método auxiliar ahora queda perfectamente aislado a nivel de clase
+    private RouterLink crearLink(Class viewClass, VaadinIcon icon, String text) {
+        RouterLink link = new RouterLink();
+        link.setRoute(viewClass);
+        link.add(icon.create(), new Span(text));
+        link.addClassNames(LumoUtility.Display.FLEX, LumoUtility.AlignItems.CENTER, LumoUtility.Gap.SMALL);
+        return link;
+    }
+}
+
+
+/* esta esta FULLLLLLLL GAGA
+package com.unrn.gpiv.views;
+
+
+
+import com.unrn.gpiv.common.Rol;
 import com.unrn.gpiv.model.Usuario;
 import com.unrn.gpiv.views.admin.*;
 import com.unrn.gpiv.views.empresa.MiProyectoView;
@@ -37,7 +169,7 @@ public class MainLayout extends AppLayout {
             VaadinSession.getCurrent().getSession().invalidate();
             getUI().ifPresent(ui -> ui.navigate("login"));
         });*/
-
+/*
         Button btnLogout = new Button("Salir", VaadinIcon.SIGN_OUT.create(), e -> {
             // 1. Limpiamos nuestro atributo manual por las dudas
             VaadinSession.getCurrent().setAttribute("usuarioLogueado", null);
@@ -105,7 +237,8 @@ public class MainLayout extends AppLayout {
     }
 }
 
-/*package com.unrn.gpiv.views;
+*/
+/*package com.unrn.gpiv.views; anda pero esta gaga
 
 
 import com.unrn.gpiv.views.admin.AdminLotesView;

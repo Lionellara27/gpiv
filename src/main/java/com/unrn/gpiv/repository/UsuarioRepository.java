@@ -13,7 +13,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     boolean existsByUsername(String username);
 
-    // --- PARA EL LOGIN O RECUPERACIÓN ---
+    // PARA EL LOGIN O RECUPERACIÓN
     // Busca al usuario por email (usamos Optional para evitar NullPointerException)
     Optional<Usuario> findByEmail(String email);
 

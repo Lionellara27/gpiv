@@ -8,8 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface RepresentanteEmpresaRepository extends JpaRepository<RepresentanteEmpresa, Long> {
-    // --- BÚSQUEDAS (Para el Login y Sesión) ---
-
+    // BÚSQUEDAS (Para el Login y Sesión)
     // Buscamos por username (que en tu caso es el email)
     Optional<RepresentanteEmpresa> findByUsername(String username);
 
@@ -17,8 +16,7 @@ public interface RepresentanteEmpresaRepository extends JpaRepository<Representa
     Optional<RepresentanteEmpresa> findByEmail(String email);
 
 
-    // --- VALIDACIONES (Los que ya tenías) ---
-
+    //VALIDACIONES
     boolean existsByUsername(String username);
     boolean existsByDni(String dni);
     boolean existsByCuitPersonal(String cuitPersonal);
