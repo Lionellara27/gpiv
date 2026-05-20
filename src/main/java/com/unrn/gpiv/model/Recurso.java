@@ -1,7 +1,9 @@
-package com.unrn.gpiv.inventory.model;
+package com.unrn.gpiv.model;
 
-import com.unrn.gpiv.model.Empresa;
+import com.unrn.gpiv.common.EstadoConservacionRecurso; // 🟢 IMPORTANTE: Tus nuevos enums
+import com.unrn.gpiv.common.EstadoMovimientoRecurso;
 import jakarta.persistence.*;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "recursos_fisicos")
@@ -14,17 +16,21 @@ public class Recurso {
     // Relación con el "molde" del catálogo (Ej: Hacha, Motosierra)
     @ManyToOne
     @JoinColumn(name = "item_id")
-    private Item item;
+    private Item item; // 🎯 Desde acá adentro leés item.getCategoria() de forma dinámica
 
-    // Nombre del propietario (Útil para poner "Administración" o nombres genéricos)
     private String propietario;
+    private String numeroSerie;
+    private String ubicacionFisica;
 
-    private String estadoConservacion; // "Nuevo", "Gastado", "Roto"
+    // 🎯 CAMBIO: Mapeo seguro con Enum para el estado físico (NUEVO, GASTADO, ROTO)
+    @Enumerated(EnumType.STRING)
+    private EstadoConservacionRecurso estadoConservacion;
 
-    private String numeroSerie; // Para diferenciar físicamente las unidades
-    private String categoria; // "Herramienta", "Maquinaria", etc.
+    // 🎯 CAMBIO: Mapeo seguro con Enum para los movimientos ("DISPONIBLE", "PRESTADO", etc.)
+    @Enumerated(EnumType.STRING)
+    private EstadoMovimientoRecurso estadoMovimiento = EstadoMovimientoRecurso.DISPONIBLE;
 
-    private boolean disponible = true;
+    private LocalDate fechaRegistro = LocalDate.now();
 
     // CASO A: A qué empresa le prestamos el recurso hoy
     @ManyToOne
@@ -40,10 +46,7 @@ public class Recurso {
     public Recurso() {
     }
 
-    // --- GETTERS Y SETTERS ---
-
-    public String getCategoria() { return categoria; }
-    public void setCategoria(String categoria) { this.categoria = categoria; }
+    // --- GETTERS Y SETTERS COMPLETOS ---
 
     public Long getId() {
         return id;
@@ -69,11 +72,13 @@ public class Recurso {
         this.propietario = propietario;
     }
 
-    public String getEstadoConservacion() {
+    // 🟢 Ajustado al tipo Enum
+    public EstadoConservacionRecurso getEstadoConservacion() {
         return estadoConservacion;
     }
 
-    public void setEstadoConservacion(String estadoConservacion) {
+    // 🟢 Ajustado al tipo Enum
+    public void setEstadoConservacion(EstadoConservacionRecurso estadoConservacion) {
         this.estadoConservacion = estadoConservacion;
     }
 
@@ -85,12 +90,30 @@ public class Recurso {
         this.numeroSerie = numeroSerie;
     }
 
-    public boolean isDisponible() {
-        return disponible;
+    public String getUbicacionFisica() {
+        return ubicacionFisica;
     }
 
-    public void setDisponible(boolean disponible) {
-        this.disponible = disponible;
+    public void setUbicacionFisica(String ubicacionFisica) {
+        this.ubicacionFisica = ubicacionFisica;
+    }
+
+    // 🟢 Ajustado al tipo Enum
+    public EstadoMovimientoRecurso getEstadoMovimiento() {
+        return estadoMovimiento;
+    }
+
+    // 🟢 Ajustado al tipo Enum
+    public void setEstadoMovimiento(EstadoMovimientoRecurso estadoMovimiento) {
+        this.estadoMovimiento = estadoMovimiento;
+    }
+
+    public LocalDate getFechaRegistro() {
+        return fechaRegistro;
+    }
+
+    public void setFechaRegistro(LocalDate fechaRegistro) {
+        this.fechaRegistro = fechaRegistro;
     }
 
     public Empresa getPrestadoA() {

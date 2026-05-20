@@ -1,7 +1,6 @@
 package com.unrn.gpiv.model;
 
 import com.unrn.gpiv.common.EstadoSolicitud;
-import com.unrn.gpiv.inventory.model.Recurso;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -110,7 +109,7 @@ public class Empresa {
 /*package com.unrn.gpiv.model;
 
 import com.unrn.gpiv.common.EstadoSolicitud;
-import com.unrn.gpiv.inventory.model.Recurso; // Importamos la clase del otro módulo
+import com.unrn.gpiv.model.Recurso; // Importamos la clase del otro módulo
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.unrn.gpiv.inventory.model;
+package com.unrn.gpiv.model;
 
 import jakarta.persistence.*;
 import java.util.List;
@@ -15,14 +15,15 @@ public class Item {
 
     private String descripcion; // "Herramienta de corte a explosión..."
 
-    // ¡ESTA ES LA VARIABLE MÁGICA PARA EL BUSCADOR!
-    private String categoria; // Ej: "Herramienta", "Maquinaria pesada", "Acceso"
+    // 🎯 LA CLAVE DE LA FLEXIBILIDAD: Se queda como String libre.
+    // El administrador puede tipear "Herramienta", "Insumo", "Material" o lo que pinte.
+    private String categoria;
 
-    // Relación: Un "molde" del catálogo tiene muchas herramientas físicas reales
+    // Relación bidireccional limpia con las existencias físicas reales del parque
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL)
     private List<Recurso> existencias;
 
-    // Constructor vacío obligatorio
+    // Constructor vacío obligatorio para JPA
     public Item() {
     }
 
