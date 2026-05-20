@@ -20,5 +20,4 @@ public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
     // Para validar si una Razon Social ya existe y evitar duplicados
     boolean existsByRazonSocial(String razonSocial);
 
-    List<Empresa> findByLoteAsignadoIsNull();
 }

@@ -163,9 +163,8 @@ public class EmpresaService {
         return solicitudRepository.countByEstado(EstadoSolicitud.PENDIENTE);
     }
 
-    // Trae solo las empresas registradas que aun no tienen un lote asignado
     @Transactional(readOnly = true)
-    public List<Empresa> listarAprobadasSinLote() {
-        return empresaRepository.findByLoteAsignadoIsNull();
+    public List<Empresa> listarTodasLasAprobadas() {
+        return empresaRepository.findAll(); // Trae el listado completo directo de la BD
     }
 }

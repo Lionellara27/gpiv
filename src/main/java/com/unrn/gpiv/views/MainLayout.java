@@ -98,7 +98,8 @@ public class MainLayout extends AppLayout {
                     menu.add(crearLink(MiEmpresaView.class, VaadinIcon.BUILDING, " Mi Empresa"));
                 }
 
-                if (logueado.getEmpresa() != null && logueado.getEmpresa().getLoteAsignado() != null) {
+    // >>>>>>>>>>> cambie la condicion "logueado.getEmpresa().getLoteAsignado() != null" por que la empresa ya no tiene un solo lote asignado, esta puede tener varios lotes
+                if (logueado.getEmpresa() != null && !logueado.getEmpresa().getLotesAsignados().isEmpty()) {
 
                     Span operacionesSection = new Span("OPERACIONES INDUSTRIALES");
                     operacionesSection.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Top.MEDIUM);

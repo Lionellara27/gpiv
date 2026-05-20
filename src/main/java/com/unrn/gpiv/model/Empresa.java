@@ -39,9 +39,13 @@ public class Empresa {
 
     // --- RELACIÓN CON EL ESPACIO FÍSICO ---
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lote_id")
-    private Lote loteAsignado; // Asignado por el Admin al aprobar
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "lote_id")                 TENGO QUE BORRAR ESTO
+//    private Lote loteAsignado; // Asignado por el Admin al aprobar
+
+    // cambio la relacion, para que una empresa pueda tener varios lotes
+    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Lote> lotesAsignados = new ArrayList<>();
 
     private LocalDate fechaRadicacion; // Fecha efectiva de entrada al Parque
 
@@ -90,8 +94,8 @@ public class Empresa {
     public RepresentanteEmpresa getRepresentante() { return representante; }
     public void setRepresentante(RepresentanteEmpresa representante) { this.representante = representante; }
 
-    public Lote getLoteAsignado() { return loteAsignado; }
-    public void setLoteAsignado(Lote loteAsignado) { this.loteAsignado = loteAsignado; }
+    public List<Lote> getLotesAsignados() { return lotesAsignados; }
+    public void setLotesAsignados(List<Lote> lotesAsignados) { this.lotesAsignados = lotesAsignados; }
 
     public LocalDate getFechaRadicacion() { return fechaRadicacion; }
     public void setFechaRadicacion(LocalDate fechaRadicacion) { this.fechaRadicacion = fechaRadicacion; }

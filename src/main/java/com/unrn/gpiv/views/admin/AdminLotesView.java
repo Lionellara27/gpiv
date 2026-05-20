@@ -120,25 +120,57 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
 
     private void accionGuardar() {
         try {
-            Lote lote = binder.getBean(); // fila del lote seleccionado
-            if (lote.getEstado() == EstadoLote.LIBRE && empresaAsignada.getValue() != null) {
+            Lote lote = binder.getBean(); // Fila del lote seleccionado o editado
+
+            if (empresaAsignada.getValue() != null) {
+                // Asignamos la empresa elegida (puede ser la primera o una nueva)
                 lote.setEmpresa(empresaAsignada.getValue());
-                lote.setFechaAsignacion(LocalDate.now()); // Registra la fecha de asignacion
-                lote.setEstado(EstadoLote.OCUPADO);
+
+                // Si estaba libre, ahora pasa a estar ocupado y le clavamos la fecha de hoy
+                if (lote.getEstado() == EstadoLote.LIBRE) {
+                    lote.setEstado(EstadoLote.OCUPADO);
+                    lote.setFechaAsignacion(LocalDate.now());
+                }
+            } else {
+                // Si el combo está vacío, significa que desvincularon la empresa del lote
+                lote.setEmpresa(null);
+                lote.setFechaAsignacion(null);
+                lote.setEstado(EstadoLote.LIBRE);
             }
 
+            // Persistimos el lote de forma directa
             loteService.guardar(lote);
 
-            Notification.show("Lote guardado con exito", 3000, Notification.Position.TOP_CENTER)
+            Notification.show("Lote guardado con éxito", 3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
             actualizarTabla();
             limpiarFormulario();
-            
+
         } catch (Exception e) {
-            Notification.show("Error al guardar: " + e.getMessage())
-                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            Notification.show("Error al guardar: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
+//        try {
+//            Lote lote = binder.getBean(); // fila del lote seleccionado
+//            if (lote.getEstado() == EstadoLote.LIBRE && empresaAsignada.getValue() != null) {
+//                lote.setEmpresa(empresaAsignada.getValue());
+//                lote.setFechaAsignacion(LocalDate.now()); // Registra la fecha de asignacion
+//                lote.setEstado(EstadoLote.OCUPADO);
+//            }
+//
+//            loteService.guardar(lote);
+//
+//            Notification.show("Lote guardado con exito", 3000, Notification.Position.TOP_CENTER)
+//                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+//
+//            actualizarTabla();
+//            limpiarFormulario();
+//
+//        } catch (Exception e) {
+//            Notification.show("Error al guardar: " + e.getMessage())
+//                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+//        }
     }
 
     private void editarLote(Lote lote) {
@@ -147,19 +179,41 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
         } else {
             binder.setBean(lote);
 
-            if (lote.getEstado() == EstadoLote.LIBRE) {
-                empresaAsignada.setVisible(true);
-                empresaAsignada.setEnabled(true);
-                // cargo solo las empresas aprobadas que no tengan lote
-                empresaAsignada.setItems(empresaService.listarAprobadasSinLote());
+            // Habilitamos el combo para poder elegir o cambiar la empresa siempre
+            empresaAsignada.setVisible(true);
+            empresaAsignada.setEnabled(true);
+
+            // CARGAMOS TODAS LAS EMPRESAS APROBADAS (tengan o no lote ya)
+            // Nota: Asegurate de que este método en tu Service liste las aprobadas sin el filtro "IsEmpty"
+            empresaAsignada.setItems(empresaService.listarTodasLasAprobadas());
+
+            if (lote.getEstado() == EstadoLote.OCUPADO && lote.getEmpresa() != null) {
+                // Si el lote ya estaba ocupado, preseleccionamos su empresa dueña
+                empresaAsignada.setValue(lote.getEmpresa());
             } else {
-                // Si esta ocupado, muestra la empresa que ya lo tiene pero deshabilitado
-                empresaAsignada.setVisible(lote.getEmpresa() != null);
-                empresaAsignada.setEnabled(false);
+                empresaAsignada.setValue(null);
             }
 
             panelEdicion.setVisible(true);
         }
+//        if (lote == null) {
+//            limpiarFormulario();
+//        } else {
+//            binder.setBean(lote);
+//
+//            if (lote.getEstado() == EstadoLote.LIBRE) {
+//                empresaAsignada.setVisible(true);
+//                empresaAsignada.setEnabled(true);
+//                // cargo solo las empresas aprobadas que no tengan lote
+//                empresaAsignada.setItems(empresaService.listarAprobadasSinLote());
+//            } else {
+//                // Si esta ocupado, muestra la empresa que ya lo tiene pero deshabilitado
+//                empresaAsignada.setVisible(lote.getEmpresa() != null);
+//                empresaAsignada.setEnabled(false);
+//            }
+//
+//            panelEdicion.setVisible(true);
+//        }
     }
 
     private void limpiarFormulario() {
@@ -181,6 +235,10 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
         grid.addColumn(Lote::getNroLote).setHeader("Nro. Lote").setSortable(true);
         grid.addColumn(Lote::getUbicacion).setHeader("Ubicación");
         grid.addColumn(lote -> lote.getSuperficie() + " m²").setHeader("Superficie");
+        // empresa asignada al lote
+        grid.addColumn(lote -> lote.getEmpresa() != null ? lote.getEmpresa().getRazonSocial() : "Sin Asignar")
+                .setHeader("Empresa Asignada")
+                .setSortable(true);
         grid.addColumn(Lote::getCaracteristicas).setHeader("Características");
         
         grid.addComponentColumn(lote -> {

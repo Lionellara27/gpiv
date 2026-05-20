@@ -40,7 +40,7 @@ public class Lote {
     )
     private Set<Servicio> servicios = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "empresa_id")
     private Empresa empresa;
 
