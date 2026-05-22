@@ -107,8 +107,29 @@ public class EvaluarSolicitudesView extends VerticalLayout {
     private HorizontalLayout crearBotoneraAcciones(SolicitudRadicacion solicitud) {
         HorizontalLayout layout = new HorizontalLayout();
 
+// --- BOTÓN DE VER DETALLES (El ojo) ---
+        Button btnVerDetalles = new Button(VaadinIcon.EYE.create());
+        btnVerDetalles.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
-        // --- BOTÓN DE VER DETALLES (El ojo) ---
+        btnVerDetalles.addClickListener(e -> {
+
+            // 🛡Solo cambiamos el estado si era un proyecto nuevo (PENDIENTE)
+            if (solicitud.getEstado() == com.unrn.gpiv.common.EstadoSolicitud.PENDIENTE) {
+
+                // 1. Cambia el estado en la base de datos en segundo plano
+                empresaService.marcarComoEnEvaluacion(solicitud.getId());
+
+                //  Actualizamos el estado local del objeto y refrescamos SOLO esta fila
+                solicitud.setEstado(com.unrn.gpiv.common.EstadoSolicitud.EN_EVALUACION);
+                grid.getDataProvider().refreshItem(solicitud);
+            }
+
+            // Abre el cartel al instante sin importar en qué estado esté
+            abrirDetallesSolicitud(solicitud);
+        });
+
+        layout.add(btnVerDetalles);
+        /*--- BOTÓN DE VER DETALLES (El ojo) ---
         Button btnVerDetalles = new Button(VaadinIcon.EYE.create());
         btnVerDetalles.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
@@ -125,8 +146,46 @@ public class EvaluarSolicitudesView extends VerticalLayout {
         });
 
         layout.add(btnVerDetalles);
+    */
 
         // --- DESCARGA PDF ---
+        if (solicitud.getProyecto() != null && solicitud.getProyecto().getPdfProyecto() != null) {
+
+            // 1. BLINDAJE DEL NOMBRE
+            String nombreArchivo = solicitud.getProyecto().getNombreArchivoPdf();
+            if (nombreArchivo == null || nombreArchivo.trim().isEmpty()) {
+                nombreArchivo = "proyecto_radicacion.pdf";
+            } else if (!nombreArchivo.toLowerCase().endsWith(".pdf")) {
+                nombreArchivo += ".pdf";
+            }
+
+            // 2. CREAMOS EL RECURSO Y LE DECIMOS QUE ES UN PDF
+            StreamResource resource = new StreamResource(
+                    nombreArchivo,
+                    () -> new ByteArrayInputStream(solicitud.getProyecto().getPdfProyecto())
+            );
+            resource.setContentType("application/pdf");
+
+            // 3. EL ANCHOR (ACÁ ESTABA EL ERROR DEL "f")
+            Anchor linkDescarga = new Anchor(resource, "");
+
+            // Le pasamos la variable nombreArchivo en vez de un "true"
+            linkDescarga.getElement().setAttribute("download", nombreArchivo);
+
+            Button btnPdf = new Button(VaadinIcon.DOWNLOAD.create());
+            btnPdf.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+            btnPdf.addClickListener(e -> {
+                empresaService.marcarComoEnEvaluacion(solicitud.getId());
+                solicitud.setEstado(com.unrn.gpiv.common.EstadoSolicitud.EN_EVALUACION);
+                grid.getDataProvider().refreshItem(solicitud);
+            });
+
+            linkDescarga.add(btnPdf);
+            layout.add(linkDescarga);
+        }
+
+                /*--- DESCARGA PDF ---
         if (solicitud.getProyecto() != null && solicitud.getProyecto().getPdfProyecto() != null) {
             StreamResource resource = new StreamResource(
                     solicitud.getProyecto().getNombreArchivoPdf() != null ? solicitud.getProyecto().getNombreArchivoPdf() : "proyecto.pdf",
@@ -149,7 +208,7 @@ public class EvaluarSolicitudesView extends VerticalLayout {
 
             linkDescarga.add(btnPdf);
             layout.add(linkDescarga);
-        }
+        }*/
 
         /* BOTON DEL OJO Y PDF VIEJOS ANDAN BIEN PERO SON MUY LENTOS!!!!!!!!----------------------------------
         // --- BOTÓN DE VER DETALLES (El ojo) ---

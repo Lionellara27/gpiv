@@ -44,7 +44,7 @@ public class Empresa {
 //    private Lote loteAsignado; // Asignado por el Admin al aprobar
 
     // cambio la relacion, para que una empresa pueda tener varios lotes
-    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Lote> lotesAsignados = new ArrayList<>();
 
     private LocalDate fechaRadicacion; // Fecha efectiva de entrada al Parque
