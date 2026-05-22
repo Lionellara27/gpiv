@@ -1,5 +1,6 @@
 package com.unrn.gpiv.service;
 
+import com.unrn.gpiv.common.EstadoLote;
 import com.unrn.gpiv.model.Lote;
 import com.unrn.gpiv.repository.LoteRepository;
 import org.springframework.stereotype.Service;
@@ -28,5 +29,9 @@ public class LoteService {
     
     public void eliminar(Lote lote) {
         repository.delete(lote);
+    }
+
+    public List<Lote> buscarPorEstado(EstadoLote estado) {
+        return repository.findByEstado(estado);
     }
 }
