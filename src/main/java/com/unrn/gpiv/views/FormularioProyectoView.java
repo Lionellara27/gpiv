@@ -3,7 +3,7 @@ package com.unrn.gpiv.views;
 import com.unrn.gpiv.common.TipoServicio;
 import com.unrn.gpiv.model.ProyectoProductivo;
 import com.unrn.gpiv.model.RepresentanteEmpresa;
-import com.unrn.gpiv.model.SolicitudRadicacion; // IMPORTANTE
+import com.unrn.gpiv.model.SolicitudRadicacion;
 import com.unrn.gpiv.service.EmpresaService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -47,7 +47,10 @@ public class FormularioProyectoView extends VerticalLayout implements HasUrlPara
     // Binder para ProyectoProductivo
     private Binder<ProyectoProductivo> binder = new Binder<>(ProyectoProductivo.class);
 
-    // Variables de estado para el RECICLAJE
+    // 🎯 VARIABLES TEMPORALES PARA ATRAPAR EL PDF EN EL AIRE (NUEVO)
+    private byte[] pdfBytesTemporal = null;
+    private String pdfNombreTemporal = null;
+
     private boolean esEdicion = false;
     private SolicitudRadicacion solicitudExistente;
     private H2 titulo = new H2("Proyecto Productivo");
@@ -63,8 +66,27 @@ public class FormularioProyectoView extends VerticalLayout implements HasUrlPara
         getStyle().set("overflow-y", "auto");
         getStyle().set("background-color", "#f5f7fa");
 
-        configurarValidaciones();
-        configurarUpload();
+        // Limitamos a que solo puedan subir PDFs
+        uploadPdf.setAcceptedFileTypes("application/pdf", ".pdf");
+
+        // 🚀 LA MAGIA: Cuando el archivo termina de cargar en el cuadradito, lo leemos al instante
+        uploadPdf.addSucceededListener(event -> {
+            try {
+                pdfBytesTemporal = buffer.getInputStream().readAllBytes();
+                pdfNombreTemporal = event.getFileName();
+                Notification.show("PDF procesado y listo para enviar.", 3000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception ex) {
+                Notification.show("Error al leer el archivo PDF.", 3000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
+        // Si el usuario se arrepiente y borra el archivo del cuadradito, limpiamos las variables
+        uploadPdf.getElement().addEventListener("file-remove", event -> {
+            pdfBytesTemporal = null;
+            pdfNombreTemporal = null;
+        });
 
         VerticalLayout formCard = new VerticalLayout();
         formCard.setWidth("700px");
@@ -104,7 +126,6 @@ public class FormularioProyectoView extends VerticalLayout implements HasUrlPara
         botonera.getStyle().set("margin-top", "2em");
         botonera.setJustifyContentMode(JustifyContentMode.END);
 
-        // BOTÓN CANCELAR CON GPS
         Button btnCancelar = new Button("Cancelar", e -> {
             if (esEdicion) {
                 getUI().ifPresent(ui -> ui.navigate("mi-proyecto"));
@@ -126,7 +147,6 @@ public class FormularioProyectoView extends VerticalLayout implements HasUrlPara
         add(formCard);
     }
 
-    // --- EL CORAZÓN DEL RECICLAJE ---
     @Override
     public void setParameter(BeforeEvent event, @OptionalParameter Long parameter) {
         if (parameter != null) {
@@ -134,17 +154,16 @@ public class FormularioProyectoView extends VerticalLayout implements HasUrlPara
             this.solicitudExistente = empresaService.obtenerSolicitudPorId(parameter);
 
             if (solicitudExistente != null) {
-                // Cargamos datos en los campos
                 txtNombreProyecto.setValue(solicitudExistente.getRazonSocialPretendida());
                 binder.readBean(solicitudExistente.getProyecto());
 
-                // Cambiamos textos de la UI
                 titulo.setText("Modificar Mi Proyecto");
                 btnEnviar.setText("GUARDAR CAMBIOS");
                 btnEnviar.getStyle().set("background-color", "#0063BE");
             }
         }
     }
+
     private void ejecutarAccionPrincipal() {
         try {
             RepresentanteEmpresa rep = (RepresentanteEmpresa) VaadinSession.getCurrent().getAttribute("usuarioLogueado");
@@ -154,43 +173,40 @@ public class FormularioProyectoView extends VerticalLayout implements HasUrlPara
                 return;
             }
 
-            // --- LA LÍNEA MÁGICA ---
-            // Si es edición, usamos el proyecto que ya tiene ID. Si no, creamos uno nuevo.
             ProyectoProductivo proyecto = esEdicion ? solicitudExistente.getProyecto() : new ProyectoProductivo();
 
             if (binder.writeBeanIfValid(proyecto)) {
 
-                // Lógica del PDF (Solo pedimos PDF si es nuevo o si subió uno para reemplazar)
-                if (!buffer.getFileName().isEmpty()) {
-                    proyecto.setPdfProyecto(buffer.getInputStream().readAllBytes());
-                    proyecto.setNombreArchivoPdf(buffer.getFileName());
+                // 🚀 CAMBIO ACÁ: Usamos las variables temporales que atraparon el PDF real
+                if (pdfBytesTemporal != null && pdfNombreTemporal != null) {
+                    proyecto.setPdfProyecto(pdfBytesTemporal);
+                    proyecto.setNombreArchivoPdf(pdfNombreTemporal);
                 } else if (!esEdicion) {
-                    // Si es nuevo y no hay PDF, frenamos. Si es edición y no hay PDF nuevo, dejamos el anterior.
-                    Notification.show("Debe subir el PDF del proyecto", 3000, Notification.Position.MIDDLE);
+                    // Si es nuevo y no subió nada, lo frenamos en seco
+                    Notification.show("Debe adjuntar el PDF del proyecto antes de enviar.", 4000, Notification.Position.MIDDLE)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
                     return;
                 }
 
                 if (esEdicion) {
-                    // MODO UPDATE: Seteamos el nombre y guardamos la solicitud que ya tiene ID
                     solicitudExistente.setRazonSocialPretendida(txtNombreProyecto.getValue());
-                    // No hace falta setear el proyecto de nuevo porque 'proyecto' es la misma referencia
                     empresaService.actualizarSolicitud(solicitudExistente);
-                    Notification.show("Cambios guardados con éxito en la solicitud actual.");
+                    Notification.show("Cambios guardados con éxito.");
                 } else {
-                    // MODO INSERT: Creación desde cero
                     empresaService.recibirSolicitud(proyecto, rep, txtNombreProyecto.getValue());
                     Notification.show("Solicitud enviada correctamente.");
                 }
 
-                // Volvemos al resumen o al inicio según el caso
                 getUI().ifPresent(ui -> ui.navigate(esEdicion ? "mi-proyecto" : ""));
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            Notification.show("Error crítico al guardar: " + ex.getMessage(), 5000, Notification.Position.MIDDLE)
+            Notification.show("Error al guardar: " + ex.getMessage(), 5000, Notification.Position.MIDDLE)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
+}
+
 
    /*v iejo private void ejecutarAccionPrincipal() {
 
@@ -230,7 +246,7 @@ public class FormularioProyectoView extends VerticalLayout implements HasUrlPara
             Notification.show("Error crítico: " + ex.getMessage(), 5000, Notification.Position.MIDDLE).addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }*/
-
+/*
     private void configurarUpload() {
         uploadPdf.setAcceptedFileTypes("application/pdf");
         uploadPdf.setMaxFiles(1);
