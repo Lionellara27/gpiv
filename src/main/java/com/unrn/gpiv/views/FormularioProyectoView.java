@@ -66,10 +66,13 @@ public class FormularioProyectoView extends VerticalLayout implements HasUrlPara
         getStyle().set("overflow-y", "auto");
         getStyle().set("background-color", "#f5f7fa");
 
+        // 🚀 ACÁ LLAMAMOS A TU MÉTODO PARA QUE LOS CAMPOS NO QUEDEN NULL
+        configurarValidaciones();
+
         // Limitamos a que solo puedan subir PDFs
         uploadPdf.setAcceptedFileTypes("application/pdf", ".pdf");
 
-        // 🚀 LA MAGIA: Cuando el archivo termina de cargar en el cuadradito, lo leemos al instante
+        // Cuando el archivo termina de cargar en el cuadradito, lo leemos al instante
         uploadPdf.addSucceededListener(event -> {
             try {
                 pdfBytesTemporal = buffer.getInputStream().readAllBytes();
@@ -175,14 +178,14 @@ public class FormularioProyectoView extends VerticalLayout implements HasUrlPara
 
             ProyectoProductivo proyecto = esEdicion ? solicitudExistente.getProyecto() : new ProyectoProductivo();
 
+            // Si pasa las validaciones de tu método configurarValidaciones...
             if (binder.writeBeanIfValid(proyecto)) {
 
-                // 🚀 CAMBIO ACÁ: Usamos las variables temporales que atraparon el PDF real
+                // 🚀 Usamos las variables temporales que atraparon el PDF real
                 if (pdfBytesTemporal != null && pdfNombreTemporal != null) {
                     proyecto.setPdfProyecto(pdfBytesTemporal);
                     proyecto.setNombreArchivoPdf(pdfNombreTemporal);
                 } else if (!esEdicion) {
-                    // Si es nuevo y no subió nada, lo frenamos en seco
                     Notification.show("Debe adjuntar el PDF del proyecto antes de enviar.", 4000, Notification.Position.MIDDLE)
                             .addThemeVariants(NotificationVariant.LUMO_ERROR);
                     return;
@@ -198,12 +201,26 @@ public class FormularioProyectoView extends VerticalLayout implements HasUrlPara
                 }
 
                 getUI().ifPresent(ui -> ui.navigate(esEdicion ? "mi-proyecto" : ""));
+            } else {
+                // Si el usuario dejó un campo vacío, le avisamos
+                Notification.show("Por favor, completá todos los campos obligatorios.", 3000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
             Notification.show("Error al guardar: " + ex.getMessage(), 5000, Notification.Position.MIDDLE)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
+    }
+
+    // 🚀 TU MÉTODO ORIGINAL AL FINAL DE LA CLASE (INTACTO)
+    private void configurarValidaciones() {
+        binder.forField(txtNombreProyecto).asRequired("El nombre es obligatorio").bind(ProyectoProductivo::getNombreProyecto, ProyectoProductivo::setNombreProyecto);
+        binder.forField(txtActividad).asRequired("Obligatorio").bind(ProyectoProductivo::getActividadPrincipal, ProyectoProductivo::setActividadPrincipal);
+        binder.forField(selSuperficie).asRequired("Obligatorio").bind(ProyectoProductivo::getSuperficieRequerida, ProyectoProductivo::setSuperficieRequerida);
+        binder.forField(txtEmpleados).asRequired("Obligatorio").bind(ProyectoProductivo::getCantidadEmpleados, ProyectoProductivo::setCantidadEmpleados);
+        binder.forField(chkServicios).asRequired("Obligatorio").bind(ProyectoProductivo::getServiciosNecesarios, ProyectoProductivo::setServiciosNecesarios);
+        binder.forField(txtImpacto).bind(ProyectoProductivo::getImpactoAmbiental, ProyectoProductivo::setImpactoAmbiental);
     }
 }
 

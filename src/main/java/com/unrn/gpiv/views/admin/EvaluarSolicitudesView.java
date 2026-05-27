@@ -147,7 +147,37 @@ public class EvaluarSolicitudesView extends VerticalLayout {
 
         layout.add(btnVerDetalles);
     */
+// --- DESCARGA PDF ---
+        if (solicitud.getProyecto() != null && solicitud.getProyecto().getPdfProyecto() != null) {
 
+            String nombreArchivo = solicitud.getProyecto().getNombreArchivoPdf();
+            if (nombreArchivo == null || nombreArchivo.isEmpty()) nombreArchivo = "proyecto.pdf";
+            if (!nombreArchivo.toLowerCase().endsWith(".pdf")) nombreArchivo += ".pdf";
+
+            StreamResource resource = new StreamResource(nombreArchivo,
+                    () -> new ByteArrayInputStream(solicitud.getProyecto().getPdfProyecto()));
+
+            // Esto es CLAVE para que el navegador sepa que es un PDF y no un archivo 'f'
+            resource.setContentType("application/pdf");
+            resource.setCacheTime(0); // Evita que descargue versiones viejas
+
+            Anchor linkDescarga = new Anchor(resource, "");
+            linkDescarga.getElement().setAttribute("download", true); // Atributo HTML para forzar descarga
+
+            Button btnPdf = new Button(VaadinIcon.DOWNLOAD.create());
+            btnPdf.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+            // Al hacer clic, marcamos como en evaluación y descargamos
+            btnPdf.addClickListener(e -> {
+                empresaService.marcarComoEnEvaluacion(solicitud.getId());
+                solicitud.setEstado(com.unrn.gpiv.common.EstadoSolicitud.EN_EVALUACION);
+                grid.getDataProvider().refreshItem(solicitud);
+            });
+
+            linkDescarga.add(btnPdf);
+            layout.add(linkDescarga);
+        }
+        /*
         // --- DESCARGA PDF ---
         if (solicitud.getProyecto() != null && solicitud.getProyecto().getPdfProyecto() != null) {
 
@@ -183,7 +213,7 @@ public class EvaluarSolicitudesView extends VerticalLayout {
 
             linkDescarga.add(btnPdf);
             layout.add(linkDescarga);
-        }
+        }*/
 
                 /*--- DESCARGA PDF ---
         if (solicitud.getProyecto() != null && solicitud.getProyecto().getPdfProyecto() != null) {

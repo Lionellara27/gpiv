@@ -87,6 +87,13 @@ public class EmpresaService {
         nuevaEmpresa.setProyecto(solicitud.getProyecto());
         nuevaEmpresa.setTitulada(false); //falta la escritura
 
+        // a revisar esta parte
+        if (solicitud.getRepresentante() != null && solicitud.getRepresentante().getCuitPersonal() != null) {
+            nuevaEmpresa.setCuit(solicitud.getRepresentante().getCuitPersonal());
+        } else {
+            nuevaEmpresa.setCuit("A DEFINIR"); // Por si acaso no hay representante
+        }
+
         solicitud.setEstado(EstadoSolicitud.APROBADA);
         solicitud.setFechaResolucion(LocalDateTime.now()); // agregamos esto para saber la fecha exacta !!!!!
 
@@ -166,5 +173,12 @@ public class EmpresaService {
     @Transactional(readOnly = true)
     public List<Empresa> listarTodasLasAprobadas() {
         return empresaRepository.findAll(); // Trae el listado completo directo de la BD
+    }
+
+    //DEMO PARA VER SI PUEDO GESTIONAR EL BOTON DE MODIFICAR EL INVENTARIO
+    // Este método trae todas las empresas para el ComboBox del inventario
+    @Transactional(readOnly = true)
+    public List<Empresa> obtenerTodasLasEmpresas() {
+        return empresaRepository.findAll();
     }
 }

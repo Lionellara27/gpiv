@@ -2,8 +2,10 @@ package com.unrn.gpiv.views.admin;
 
 import com.unrn.gpiv.common.EstadoConservacionRecurso;
 import com.unrn.gpiv.common.EstadoMovimientoRecurso;
+import com.unrn.gpiv.model.Empresa;
 import com.unrn.gpiv.model.Item;
 import com.unrn.gpiv.model.Recurso;
+import com.unrn.gpiv.service.EmpresaService;
 import com.unrn.gpiv.service.InventarioService;
 import com.unrn.gpiv.service.RecursoService;
 import com.unrn.gpiv.views.MainLayout;
@@ -33,6 +35,11 @@ import java.time.format.DateTimeFormatter; // 🟢 IMPORTANTE PARA LA FECHA
 @Route(value = "admin/inventario", layout = MainLayout.class)
 public class InventarioView extends VerticalLayout {
 
+
+    //para ver si puedo hacer anda el boton de modificar
+    @Autowired
+    private EmpresaService empresaService;
+    //
     private final RecursoService recursoService;
     private final InventarioService inventarioService;
     private Grid<Recurso> grid;
@@ -74,6 +81,42 @@ public class InventarioView extends VerticalLayout {
         grid = new Grid<>(Recurso.class, false);
         grid.setSizeFull();
 
+        // 1. FECHA
+        grid.addColumn(r -> r.getFechaRegistro() != null ? r.getFechaRegistro().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-")
+                .setHeader("Fecha").setSortable(true).setWidth("120px").setFlexGrow(0);
+
+        // 2. NOMBRE
+        grid.addColumn(r -> r.getItem() != null ? r.getItem().getNombre() : "S/N")
+                .setHeader("Nombre").setSortable(true);
+
+        // 3. CATEGORÍA
+        grid.addColumn(r -> r.getItem() != null ? r.getItem().getCategoria() : "Sin Cat")
+                .setHeader("Categoría").setSortable(true);
+
+        // 4. ESTADO FÍSICO (Badge)
+        grid.addComponentColumn(this::createEstadoBadge).setHeader("Estado Físico").setWidth("150px").setFlexGrow(0);
+
+        // 5. ESTADO MOVIMIENTO (Nuevo: Disponible/Prestado)
+        // Acá podés poner un texto simple o un badge de color también si querés
+        grid.addColumn(Recurso::getEstadoMovimiento).setHeader("Estado").setSortable(true);
+
+        // 6. POSEEDOR (El nuevo campo clave)
+        // Si prestadoA es null, significa que está en el parque/disponible
+        grid.addColumn(r -> r.getPrestadoA() != null ? r.getPrestadoA().getRazonSocial() : "El Parque")
+                .setHeader("Poseedor").setSortable(true);
+
+        // 7. UBICACIÓN
+        grid.addColumn(Recurso::getUbicacionFisica).setHeader("Ubicación").setSortable(true);
+
+        // 8. ACCIONES (Lápiz y Tacho)
+        grid.addComponentColumn(this::createActionButtons).setHeader("Acciones").setWidth("120px").setFlexGrow(0);
+    }
+
+    /* columna que se que SI ANDA
+    private void configureGrid() {
+        grid = new Grid<>(Recurso.class, false);
+        grid.setSizeFull();
+
         // 🎯 1. LA COLUMNA FECHA (Exactamente donde la pediste)
         grid.addColumn(r -> r.getFechaRegistro() != null ? r.getFechaRegistro().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-")
                 .setHeader("Fecha").setSortable(true).setWidth("120px").setFlexGrow(0);
@@ -95,7 +138,7 @@ public class InventarioView extends VerticalLayout {
         // 6. Acciones
         grid.addComponentColumn(this::createActionButtons).setHeader("Acciones").setWidth("120px").setFlexGrow(0);
     }
-
+*/
     private Span createEstadoBadge(Recurso r) {
         String estado = r.getEstadoMovimiento().name();
         Span badge = new Span(estado);
@@ -112,8 +155,15 @@ public class InventarioView extends VerticalLayout {
     }
 
     private HorizontalLayout createActionButtons(Recurso r) {
+        //boton de modificar
+        Button btnEdit = new Button(VaadinIcon.PENCIL.create());
+        btnEdit.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_TERTIARY);
+        btnEdit.setTooltipText("Modificar estado/poseedor");
+        btnEdit.addClickListener(e -> abrirEditorRecurso(r));
+
+        //logica del boton para elimianr!
         Button btnDelete = new Button(VaadinIcon.TRASH.create());
-        btnDelete.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+        btnDelete.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_TERTIARY);
         btnDelete.setTooltipText("Eliminar Recurso");
 
         btnDelete.addClickListener(e -> {
@@ -138,7 +188,7 @@ public class InventarioView extends VerticalLayout {
             confirmDialog.open();
         });
 
-        return new HorizontalLayout(btnDelete);
+        return new HorizontalLayout(btnDelete, btnEdit);
     }
 
     // --- MODAL PRINCIPAL: ALTA DE RECURSO FÍSICO ---
@@ -262,5 +312,62 @@ public class InventarioView extends VerticalLayout {
         } else {
             grid.setItems(recursoService.buscarPorCategoria(filterText.getValue()));
         }
+    }
+
+    //DEMO LOGICA DEL BOTON DE EDITAR RECURSOS!
+    private void abrirEditorRecurso(Recurso r) {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Modificar Registro: " + r.getItem().getNombre());
+        dialog.setMinWidth("400px");
+
+        VerticalLayout layout = new VerticalLayout();
+
+        // 1. Combo de estados (En uso, Disponible, etc.)
+        ComboBox<EstadoMovimientoRecurso> estadoCombo = new ComboBox<>("Estado Actual");
+        estadoCombo.setItems(EstadoMovimientoRecurso.values());
+        estadoCombo.setValue(r.getEstadoMovimiento());
+        estadoCombo.setWidthFull();
+
+        // 2. Combo de Empresas (quién lo tiene ahora)
+        ComboBox<Empresa> empresaCombo = new ComboBox<>("Prestado a / Poseedor");
+        // Asumo que tenés un empresaService para listar las empresas
+        empresaCombo.setItems(this.empresaService.obtenerTodasLasEmpresas());
+        empresaCombo.setItemLabelGenerator(Empresa::getRazonSocial);
+        empresaCombo.setValue(r.getPrestadoA());
+        empresaCombo.setWidthFull();
+
+        // 🎯 Lógica inteligente: Ocultamos el campo "Empresa" si está disponible
+        empresaCombo.setVisible(r.getEstadoMovimiento() == EstadoMovimientoRecurso.PRESTADO ||
+                r.getEstadoMovimiento() == EstadoMovimientoRecurso.A_DEVOLVER);
+
+        estadoCombo.addValueChangeListener(e -> {
+            boolean requierePoseedor = (e.getValue() == EstadoMovimientoRecurso.PRESTADO ||
+                    e.getValue() == EstadoMovimientoRecurso.A_DEVOLVER);
+            empresaCombo.setVisible(requierePoseedor);
+        });
+
+        layout.add(estadoCombo, empresaCombo);
+
+        // 3. Botón Guardar
+        Button btnGuardar = new Button("Guardar Cambios", e -> {
+            try {
+                r.setEstadoMovimiento(estadoCombo.getValue());
+                // Si no requiere poseedor, guardamos null
+                r.setPrestadoA(empresaCombo.isVisible() ? empresaCombo.getValue() : null);
+
+                recursoService.guardarRecurso(r); // Actualizamos en BD
+                grid.getDataProvider().refreshItem(r); // Refrescamos solo la fila, ¡mágico!
+
+                dialog.close();
+                Notification.show("Recurso actualizado con éxito").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception ex) {
+                Notification.show("Error: " + ex.getMessage()).addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
+        btnGuardar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        dialog.getFooter().add(btnGuardar, new Button("Cancelar", c -> dialog.close()));
+        dialog.add(layout);
+        dialog.open();
     }
 }
