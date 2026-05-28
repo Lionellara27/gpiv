@@ -113,21 +113,29 @@ public class EmpresaService {
                 .orElseThrow(() -> new RuntimeException("Credenciales inválidas"));
     }
 //new
-    @Transactional(readOnly = true)
-    public Empresa obtenerEmpresaPorRepresentante(RepresentanteEmpresa rep) {
-        Empresa empresa = empresaRepository.findByRepresentante(rep).orElse(null);
+@Transactional(readOnly = true)
+public Empresa obtenerEmpresaPorRepresentante(RepresentanteEmpresa rep) {
+    Empresa empresa = empresaRepository.findByRepresentante(rep).orElse(null);
 
-        // Magia pura: Despertamos los datos LAZY antes de mandarlos a Vaadin
-        if (empresa != null && empresa.getProyecto() != null) {
-            Hibernate.initialize(empresa.getProyecto()); // Trae el proyecto
-
+    if (empresa != null) {
+        if (empresa.getProyecto() != null) {
+            org.hibernate.Hibernate.initialize(empresa.getProyecto());
             if (empresa.getProyecto().getServiciosNecesarios() != null) {
-                Hibernate.initialize(empresa.getProyecto().getServiciosNecesarios()); // Trae la lista de luz/gas/agua
+                org.hibernate.Hibernate.initialize(empresa.getProyecto().getServiciosNecesarios());
             }
         }
 
-        return empresa;
+        // 🚀 ESTAS SON LAS 4 LÍNEAS QUE EVITAN TU ERROR ACTUAL:
+        org.hibernate.Hibernate.initialize(empresa.getEmpleados());
+        org.hibernate.Hibernate.initialize(empresa.getVehiculos());
+        org.hibernate.Hibernate.initialize(empresa.getConsumosMensuales());
+        org.hibernate.Hibernate.initialize(empresa.getInformesDeAvance());
     }
+
+    return empresa;
+}
+
+
     //Se hace el login de representante con email y pass! para luego entrar como usuario
     public RepresentanteEmpresa login(String email, String password) {
         // Buscamos por email (o username, según como lo guardes)

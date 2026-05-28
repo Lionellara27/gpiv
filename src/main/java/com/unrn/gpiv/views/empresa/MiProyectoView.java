@@ -86,6 +86,47 @@ public class MiProyectoView extends VerticalLayout {
 
         // BOTÓN VER PDF (Configurado con Anchor para descarga real)
         acciones.add(btnModificar);
+
+        // 🛡️ BLINDAJE 1: Solo configuramos el botón del PDF si el proyecto existe
+        if (proyecto != null) {
+            configurarBotonPDF(acciones, proyecto, logueado);
+        }
+
+        //parte nueva para gestionar "mi empresa"
+        if (estado == EstadoSolicitud.APROBADA) {
+            Button btnIrAEmpresa = new Button("Completar Registro Empresa", VaadinIcon.BUILDING.create());
+            btnIrAEmpresa.addThemeVariants(ButtonVariant.LUMO_SUCCESS); // Verde de éxito
+            btnIrAEmpresa.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("mi-empresa")));
+            acciones.add(btnIrAEmpresa);
+        }
+
+        statusCard.add(sub, badgeEstado, infoEstado, acciones);
+
+        // --- RESUMEN DE DATOS ---
+        VerticalLayout datosProyecto = new VerticalLayout();
+        datosProyecto.add(new H3("Resumen del Proyecto"));
+
+        datosProyecto.add(new Paragraph("Nombre del proyecto: " + solicitud.getRazonSocialPretendida()));
+
+        // 🛡️ BLINDAJE 2: Solo leemos la superficie y servicios si el proyecto no es null
+        if (proyecto != null) {
+            datosProyecto.add(new Paragraph("Superficie Requerida: " + proyecto.getSuperficieRequerida() + " m²"));
+
+            String servicios = proyecto.getServiciosNecesarios().stream()
+                    .map(Enum::name)
+                    .collect(Collectors.joining(", "));
+            datosProyecto.add(new Paragraph("Servicios: " + (servicios.isEmpty() ? "Ninguno" : servicios)));
+        } else {
+            // Si el proyecto es nulo, mostramos este cartelito
+            datosProyecto.add(new Paragraph("Atención: Los detalles técnicos del proyecto aún no se han cargado correctamente."));
+        }
+
+        add(titulo, statusCard, datosProyecto);
+    }
+        /*anda pero pueeede mejorar!
+        BOTÓN VER PDF (Configurado con Anchor para descarga real)
+
+        acciones.add(btnModificar);
         configurarBotonPDF(acciones, proyecto, logueado);
 
         //parte nueva para gestionar "mi empresa"
@@ -108,7 +149,7 @@ public class MiProyectoView extends VerticalLayout {
         /*String nombreProyecto = (proyecto.getNombreProyecto() != null) ? proyecto.getNombreProyecto() : "Nombre no asignado";
         datosProyecto.add(new Paragraph("Proyecto: " + nombreProyecto))*/
         ;
-
+/*
         datosProyecto.add(new Paragraph("Superficie Requerida: " + proyecto.getSuperficieRequerida() + " m²"));
 
         String servicios = proyecto.getServiciosNecesarios().stream()
@@ -118,7 +159,7 @@ public class MiProyectoView extends VerticalLayout {
 
         add(titulo, statusCard, datosProyecto);
     }
-
+        */
     private void renderizarVistaSinProyecto() {
         add(new H2("Aún no has presentado ningún proyecto."));
         Button btnIrForm = new Button("Cargar Solicitud", e -> getUI().ifPresent(ui -> ui.navigate("formulario-proyecto")));
