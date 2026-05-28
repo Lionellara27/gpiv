@@ -78,6 +78,7 @@ public class MainLayout extends AppLayout {
             menu.add(crearLink(InformesEmpresasView.class, VaadinIcon.CHART_3D, " Informe de Empresas"));
             menu.add(crearLink(EvaluarSolicitudesView.class, VaadinIcon.CHECK_SQUARE_O, " Evaluar Solicitudes"));
             menu.add(crearLink(InventarioView.class, VaadinIcon.TOOLS, " Gestión de Inventario"));
+            menu.add(crearLink(HistorialDashboardView.class, VaadinIcon.TIME_BACKWARD, " Historiales y Auditoría"));
         }
 
         // =====================================================================

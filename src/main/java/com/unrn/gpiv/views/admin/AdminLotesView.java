@@ -4,6 +4,7 @@ import com.unrn.gpiv.model.Empresa;
 import com.unrn.gpiv.model.Lote;
 import com.unrn.gpiv.common.EstadoLote;
 import com.unrn.gpiv.service.EmpresaService;
+import com.unrn.gpiv.service.HistorialService;
 import com.unrn.gpiv.service.LoteService;
 import com.unrn.gpiv.views.MainLayout;
 import com.vaadin.flow.component.button.Button;
@@ -32,6 +33,7 @@ import java.time.LocalDate;
 @Route(value = "admin/lotes", layout = MainLayout.class)
 public class AdminLotesView extends VerticalLayout implements BeforeEnterObserver {
 
+    private final HistorialService historialService;
     private final LoteService loteService;
     private final EmpresaService empresaService;
     private Grid<Lote> grid = new Grid<>(Lote.class, false);
@@ -54,9 +56,10 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
 
     private VerticalLayout panelEdicion;
 
-    public AdminLotesView(LoteService loteService, EmpresaService empresaService) {
+    public AdminLotesView(LoteService loteService, EmpresaService empresaService, HistorialService historialService) {
         this.loteService = loteService;
         this.empresaService = empresaService;
+        this.historialService = historialService;
         setSizeFull();
         setPadding(true);
         setSpacing(true);
@@ -162,7 +165,14 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
                     lote.setEmpresa(empresaAsignada.getValue());
                     if (lote.getEstado() == EstadoLote.LIBRE) {
                         lote.setEstado(EstadoLote.OCUPADO);
-                        // Suponiendo que lote tiene setFechaRadicacion o setFechaAsignacion
+
+                        //guarda en historial
+                        historialService.registrarAsignacion(
+                                lote.getEmpresa().getRazonSocial(),
+                                lote.getEmpresa().getCuit(),
+                                lote.getManzana(),
+                                lote.getNroLote()
+                        );
                     }
                 } else {
                     lote.setEmpresa(null);
@@ -196,6 +206,8 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
         }
 
         try {
+            //antes de desasignar guarda en historial
+            historialService.registrarDesasignacion(lote.getManzana(), lote.getNroLote());
             // Hacemos la desasignación física en el objeto
             lote.setEmpresa(null);
             lote.setEstado(EstadoLote.LIBRE);
