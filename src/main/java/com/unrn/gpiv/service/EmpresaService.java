@@ -4,6 +4,7 @@ import com.unrn.gpiv.common.EstadoSolicitud;
 import com.unrn.gpiv.messaging.service.EmailService;
 import com.unrn.gpiv.model.*;
 import com.unrn.gpiv.repository.*;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -111,13 +112,22 @@ public class EmpresaService {
                 .filter(u -> u.getPassword().equals(password))
                 .orElseThrow(() -> new RuntimeException("Credenciales inválidas"));
     }
-
-    //NUEVO: Para que el USUARIO pueda ver su proyecto al loguearse
+//new
     @Transactional(readOnly = true)
     public Empresa obtenerEmpresaPorRepresentante(RepresentanteEmpresa rep) {
-        return empresaRepository.findByRepresentante(rep).orElse(null);
-    }
+        Empresa empresa = empresaRepository.findByRepresentante(rep).orElse(null);
 
+        // Magia pura: Despertamos los datos LAZY antes de mandarlos a Vaadin
+        if (empresa != null && empresa.getProyecto() != null) {
+            Hibernate.initialize(empresa.getProyecto()); // Trae el proyecto
+
+            if (empresa.getProyecto().getServiciosNecesarios() != null) {
+                Hibernate.initialize(empresa.getProyecto().getServiciosNecesarios()); // Trae la lista de luz/gas/agua
+            }
+        }
+
+        return empresa;
+    }
     //Se hace el login de representante con email y pass! para luego entrar como usuario
     public RepresentanteEmpresa login(String email, String password) {
         // Buscamos por email (o username, según como lo guardes)
