@@ -77,6 +77,11 @@ public class EmpresaService {
     }
 
     @Transactional
+    public void actualizarEmpresa(Empresa empresa) {
+        empresaRepository.save(empresa);
+    }
+
+    @Transactional
     public Empresa aprobarRadicacion(Long solicitudId) {
         SolicitudRadicacion solicitud = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));

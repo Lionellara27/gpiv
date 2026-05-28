@@ -1,5 +1,6 @@
 package com.unrn.gpiv.views.empresa;
 
+import com.unrn.gpiv.model.Empresa;
 import com.unrn.gpiv.model.RepresentanteEmpresa;
 import com.unrn.gpiv.model.Usuario;
 import com.unrn.gpiv.service.EmpresaService;
@@ -31,129 +32,94 @@ public class MiEmpresaView extends VerticalLayout {
 
         setPadding(true);
         setSpacing(true);
-        getStyle().set("max-width", "900px").set("margin", "0 auto"); // Centra el formulario pro en pantalla
+        getStyle().set("max-width", "900px").set("margin", "0 auto");
 
-        // 1. RECUPERAR USUARIO DE SESIÓN
+        // 1. RECUPERAR USUARIO
         Usuario usuarioLogueado = (Usuario) VaadinSession.getCurrent().getAttribute("usuarioLogueado");
-
         if (!(usuarioLogueado instanceof RepresentanteEmpresa logueado)) {
-            add(new H2("Acceso denegado. Vista para representantes de empresas."));
+            add(new H2("Acceso denegado."));
             return;
         }
 
+        // 2. RECUPERAR DATOS EMPRESA
+        Empresa empresa = empresaService.obtenerEmpresaPorRepresentante(logueado);
+        boolean yaRegistrada = (empresa != null && empresa.getFechaRadicacion() != null);
+
         H2 titulo = new H2("Registro Final de la Empresa");
-        Paragraph subtitulo = new Paragraph("Complete los datos institucionales y legales requeridos por ENREPAVI para proceder a la asignación de tierras en el Parque Industrial.");
-        subtitulo.getStyle().set("color", "#666");
+        add(titulo);
 
-        // ==========================================
-        // 🔒 BLOQUE 1: DATOS PRE-CARGADOS (SOLO LECTURA)
-        // ==========================================
+        //DATOS PRE-CARGADOS ---------------------------------------------
         VerticalLayout datosExistentesCard = new VerticalLayout();
-        datosExistentesCard.setWidthFull();
         datosExistentesCard.getStyle().set("background-color", "#F8FAFC").set("border", "1px solid #E2E8F0").set("border-radius", "12px");
-        datosExistentesCard.setPadding(true);
 
-        H3 titlePre = new H3("🏢 Datos Iniciales Verificados");
-        titlePre.getStyle().set("margin-top", "0").set("color", "#4A5568");
+        TextField txtRazonSocial = new TextField("Razón Social");
+        txtRazonSocial.setValue(logueado.getNombreCompleto());
+        txtRazonSocial.setReadOnly(true);
 
-        FormLayout formPreCargado = new FormLayout();
+        TextField txtCuit = new TextField("CUIT");
+        txtCuit.setValue(logueado.getCuitPersonal() != null ? logueado.getCuitPersonal() : "No registrado");
+        txtCuit.setReadOnly(true);
 
-        TextField txtRazonSocial = new TextField("Razón Social / Nombre Firma");
-        txtRazonSocial.setValue(logueado.getNombreCompleto()); // O el método con el que recuperes la Razón Social de tu entidad
-        txtRazonSocial.setReadOnly(true); // 🎯 Bloqueado
+        TextField txtTelefono = new TextField("Teléfono Personal");
+        txtTelefono.setValue(logueado.getTelefono() != null ? logueado.getTelefono() : "No registrado");
+        txtTelefono.setReadOnly(true);
 
-        TextField txtCuit = new TextField("CUIT Industrial");
-        txtCuit.setValue("30-12345678-9"); // Reemplazar por logueado.getCuit() real de tu BD
-        txtCuit.setReadOnly(true); // 🎯 Bloqueado
+        datosExistentesCard.add(new H3("🏢 Datos Iniciales"), new FormLayout(txtRazonSocial, txtCuit, txtTelefono));
 
-        TextField txtTelefono = new TextField("Teléfono Principal");
-        txtTelefono.setValue("2920-456789"); // Reemplazar por tu getter real
-        txtTelefono.setReadOnly(true); // 🎯 Bloqueado
-
-        formPreCargado.add(txtRazonSocial, txtCuit, txtTelefono);
-        datosExistentesCard.add(titlePre, formPreCargado);
-
-        // ==========================================
-        // 📝 BLOQUE 2: NUEVOS CAMPOS A COMPLETAR (FASE 3)
-        // ==========================================
-        VerticalLayout formularioNuevoCard = new VerticalLayout();
-        formularioNuevoCard.setWidthFull();
-        formularioNuevoCard.setPadding(false);
-        formularioNuevoCard.getStyle().set("margin-top", "20px");
-
-        H3 titleNuevos = new H3("📋 Datos Legales e Institucionales");
-        titleNuevos.getStyle().set("color", "#1A202C");
-
+        //FORMULARIO-----------------------------------------------
         FormLayout formNuevosDatos = new FormLayout();
+        TextField txtDomicilio = new TextField("Domicilio Legal");
+        ComboBox<String> comboSociedad = new ComboBox<>("Tipo Sociedad", "S.A.", "S.R.L.", "S.A.S.", "Monotributista", "Cooperativa");
+        TextField txtTelEmergencia = new TextField("Teléfono Emergencia");
+        TextField txtInscripcion = new TextField("N° Inscripción Registral");
 
-        // 📍 Domicilio Fiscal Obligatorio
-        TextField txtDomicilio = new TextField("Domicilio Legal / Fiscal");
-        txtDomicilio.setPlaceholder("Ej: Calle Rosas 123, Viedma, Río Negro");
-        txtDomicilio.setRequired(true);
-        txtDomicilio.setErrorMessage("El domicilio fiscal es obligatorio para las exenciones.");
+        // Logica de Registro/Lectura
+        if (yaRegistrada) {
+            txtDomicilio.setValue(empresa.getDireccion());
+            comboSociedad.setValue(empresa.getTipoSociedad());
+            txtTelEmergencia.setValue(empresa.getTelefonoEmergencia());
+            txtInscripcion.setValue(empresa.getInscripcionRegistral());
 
-        // ⚖️ Tipo de Sociedad Dropdown (ComboBox)
-        ComboBox<String> comboSociedad = new ComboBox<>("Personería Jurídica / Tipo Sociedad");
-        comboSociedad.setItems("Sociedad Anónima (S.A.)", "Sociedad de Responsabilidad Limitada (S.R.L.)",
-                "Sociedad por Acciones Simplificada (S.A.S.)", "Unipersonal / Monotributista", "Cooperativa");
-        comboSociedad.setPlaceholder("Seleccione una opción");
-        comboSociedad.setRequired(true);
-
-        // 📱 Teléfono Corporativo de Emergencia (Opcional)
-        TextField txtTelEmergencia = new TextField("Teléfono Corporativo de Emergencia (Opcional)");
-        txtTelEmergencia.setPlaceholder("Ej: 2920-15443322");
-        txtTelEmergencia.setHelperText("Número alternativo para contingencias en planta.");
-
-        // 📄 Número de Inscripción Registral (Opcional)
-        TextField txtInscripcion = new TextField("N° Inscripción Registral IGPJ / RPC (Opcional)");
-        txtInscripcion.setPlaceholder("Tomo, Folio o N° de Registro");
+            txtDomicilio.setReadOnly(true);
+            comboSociedad.setReadOnly(true);
+            txtTelEmergencia.setReadOnly(true);
+            txtInscripcion.setReadOnly(true);
+        }
 
         formNuevosDatos.add(txtDomicilio, comboSociedad, txtTelEmergencia, txtInscripcion);
 
-        // ==========================================
-        // 🚀 BOTONERA DE ENVÍO
-        // ==========================================
-        HorizontalLayout botonera = new HorizontalLayout();
-        botonera.getStyle().set("margin-top", "30px");
-
-        Button btnGuardar = new Button("Enviar Registro de Empresa", VaadinIcon.PAPERPLANE.create());
+        // BOTONERA-----------------------------------------------
+        Button btnGuardar = new Button("Enviar Registro", VaadinIcon.PAPERPLANE.create());
         btnGuardar.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
 
-        Button btnCancelar = new Button("Volver", e -> getUI().ifPresent(ui -> ui.navigate("mi-proyecto")));
+        if (yaRegistrada) {
+            txtDomicilio.setValue(empresa.getDireccion());
+            comboSociedad.setValue(empresa.getTipoSociedad());
+            txtTelEmergencia.setValue(empresa.getTelefonoEmergencia());
+            txtInscripcion.setValue(empresa.getInscripcionRegistral());
+            btnGuardar.setVisible(false);
+            add(new Span("Los datos ya han sido enviados."));
+        } else {
+            btnGuardar.addClickListener(e -> {
+                if (txtDomicilio.isEmpty()) {
+                    Notification.show("El domicilio es obligatorio").addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    return;
+                }
 
-        btnGuardar.addClickListener(e -> {
-            // Validamos que los obligatorios tengan datos
-            if (txtDomicilio.isEmpty() || comboSociedad.isEmpty()) {
-                Notification n = Notification.show("Por favor, complete los campos obligatorios.", 3000, Notification.Position.MIDDLE);
-                n.addThemeVariants(NotificationVariant.LUMO_ERROR);
-                return;
-            }
+                // Guardamos
+                empresa.setDireccion(txtDomicilio.getValue());
+                empresa.setTipoSociedad(comboSociedad.getValue());
+                empresa.setTelefonoEmergencia(txtTelEmergencia.getValue());
+                empresa.setInscripcionRegistral(txtInscripcion.getValue());
+                empresa.setFechaRadicacion(java.time.LocalDate.now());
 
-            // 🧠 ACÁ CONECTÁS CON TU SERVICE EN EL PRÓXIMO PASO:
-            // empresaService.registrarDatosFinales(logueado, txtDomicilio.getValue(), comboSociedad.getValue(), ...);
+                empresaService.actualizarEmpresa(empresa);
 
-            // Cartel Pro de confirmación de cola de espera de lotes (HU 07)
-            VerticalLayout content = new VerticalLayout();
-            content.add(new H3("¡Registro Enviado con Éxito! 🎉"));
-            content.add(new Paragraph("Los datos institucionales de su firma fueron guardados correctamente. La empresa ha ingresado en la cola de asignación de tierras de ENREPAVI. Se le notificará cuando haya un lote compatible disponible."));
-
-            Button btnCerrarNotif = new Button("Entendido");
-            Notification notification = new Notification(content);
-            notification.setDuration(0); // Se queda abierta hasta que clickee
-            notification.setPosition(Notification.Position.MIDDLE);
-
-            btnCerrarNotif.addClickListener(click -> {
-                notification.close();
-                getUI().ifPresent(ui -> ui.navigate("mi-proyecto")); // Lo manda al panel principal
+                Notification.show("Registro exitoso").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                getUI().ifPresent(ui -> ui.navigate("mi-proyecto"));
             });
+        }
 
-            content.add(btnCerrarNotif);
-            notification.open();
-        });
-
-        botonera.add(btnGuardar, btnCancelar);
-        formularioNuevoCard.add(titleNuevos, formNuevosDatos);
-
-        add(titulo, subtitulo, datosExistentesCard, formularioNuevoCard, botonera);
+        add(datosExistentesCard, new H3("📋 Datos Legales"), formNuevosDatos, btnGuardar);
     }
 }
