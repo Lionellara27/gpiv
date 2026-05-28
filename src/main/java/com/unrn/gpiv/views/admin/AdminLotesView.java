@@ -7,6 +7,7 @@ import com.unrn.gpiv.service.EmpresaService;
 import com.unrn.gpiv.service.LoteService;
 import com.unrn.gpiv.views.MainLayout;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
@@ -31,16 +32,14 @@ import java.time.LocalDate;
 @Route(value = "admin/lotes", layout = MainLayout.class)
 public class AdminLotesView extends VerticalLayout implements BeforeEnterObserver {
 
-    private final LoteService loteService; // Inyectado por Spring
-    private final EmpresaService empresaService; //inyectado en el constructor
+    private final LoteService loteService;
+    private final EmpresaService empresaService;
     private Grid<Lote> grid = new Grid<>(Lote.class, false);
-    
-    // El Binder conecta el objeto Lote con los inputs del formulario
     private Binder<Lote> binder = new BeanValidationBinder<>(Lote.class);
 
     private TextField manzana = new TextField("Manzana");
     private TextField nroLote = new TextField("Nro. Lote");
-    private NumberField superficie = new NumberField("Superficie (m2)");
+    private NumberField superficie = new NumberField("Superficie (m²)");
     private ComboBox<EstadoLote> estado = new ComboBox<>("Estado", EstadoLote.values());
     private TextField ubicacion = new TextField("Ubicación");
     private TextArea caracteristicas = new TextArea("Características");
@@ -49,9 +48,12 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
 
     private Button guardar = new Button("Guardar");
     private Button cancelar = new Button("Cancelar");
+    private Button editar = new Button("Editar Lote");
+    private Button eliminar = new Button("Eliminar Lote");
+    private Button desasignar = new Button("Desasignar Empresa");
+
     private VerticalLayout panelEdicion;
 
-    // Constructor con Inyección de Dependencias
     public AdminLotesView(LoteService loteService, EmpresaService empresaService) {
         this.loteService = loteService;
         this.empresaService = empresaService;
@@ -63,21 +65,19 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
         Button btnAgregar = new Button("Agregar Lote", e ->
                 getUI().ifPresent(ui -> ui.navigate(RegistrarLotesView.class))
         );
-        btnAgregar.addThemeNames("primary", "success");
+        btnAgregar.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
 
-        // Configuracion del filtro
         filtroEstado.setPlaceholder("Todos los estados");
-        filtroEstado.setClearButtonVisible(true); // la 'X' para limpiar el filtro rapido
-        filtroEstado.addValueChangeListener(e -> filtrarLotes()); // Filtra en tiempo real al cambiar
+        filtroEstado.setClearButtonVisible(true);
+        filtroEstado.addValueChangeListener(e -> filtrarLotes());
 
-        // filtro al lado del boton de agregar
         HorizontalLayout barraHerramientas = new HorizontalLayout(filtroEstado, btnAgregar);
         barraHerramientas.setAlignItems(Alignment.BASELINE);
         barraHerramientas.setSpacing(true);
 
         HorizontalLayout header = new HorizontalLayout(titulo, barraHerramientas);
         header.setWidthFull();
-        header.setFlexGrow(1, titulo); // el filtro y el boton a la derecha
+        header.setFlexGrow(1, titulo);
         header.setVerticalComponentAlignment(Alignment.CENTER, barraHerramientas);
 
         tablaPrincipalLotes();
@@ -85,92 +85,155 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
 
         HorizontalLayout content = new HorizontalLayout(grid, panelEdicion);
         content.setSizeFull();
-
         content.setFlexGrow(1, grid);
         content.setFlexGrow(0, panelEdicion);
 
-        add(header, content); // header completo con el filtro incluido
+        add(header, content);
         actualizarTabla();
     }
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
-        // Esto se ejecuta CADA VEZ que alguien entra a la ruta "admin/lotes" (para refrescar la tabla y aparezcan los datos registrados)
         actualizarTabla();
     }
 
     private VerticalLayout formularioDeEdicionLote() {
         FormLayout formLayout = new FormLayout();
         formLayout.add(manzana, nroLote, ubicacion, superficie, estado, caracteristicas, empresaAsignada);
-
         formLayout.setColspan(caracteristicas, 2);
 
         empresaAsignada.setItemLabelGenerator(Empresa::getRazonSocial);
-
         formLayout.setWidthFull();
         binder.bindInstanceFields(this);
 
-        guardar.addThemeNames("primary");
+        guardar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         guardar.addClickListener(event -> accionGuardar());
         cancelar.addClickListener(event -> limpiarFormulario());
 
-        HorizontalLayout toolbar = new HorizontalLayout(guardar, cancelar);
+        editar.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+        editar.addClickListener(event -> activarModoEdicion(true));
 
-        VerticalLayout panel = new VerticalLayout(new H2("Detalles del Lote"), formLayout, toolbar);
+        eliminar.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        eliminar.addClickListener(event -> accionEliminar());
+
+        desasignar.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY); // Estilo rojo pero sutil
+        desasignar.addClickListener(event -> accionDesasignar());
+
+        HorizontalLayout accionesPrincipales = new HorizontalLayout(editar,desasignar, eliminar);
+        HorizontalLayout barraGuardado = new HorizontalLayout(guardar, cancelar);
+
+        VerticalLayout panel = new VerticalLayout(new H2("Detalles del Lote"), formLayout, accionesPrincipales, barraGuardado);
         panel.setWidth("400px");
         panel.setMinWidth("350px");
         panel.setVisible(false);
         panel.setId("formulario-edicion");
 
-        // Panel lateral
         panel.getStyle().set("border-left", "1px solid #e5e5e5");
         panel.getStyle().set("background-color", "#fcfcfc");
 
         return panel;
     }
 
+    private void activarModoEdicion(boolean editable) {
+        manzana.setReadOnly(!editable);
+        nroLote.setReadOnly(!editable);
+        ubicacion.setReadOnly(!editable);
+        superficie.setReadOnly(!editable);
+        estado.setReadOnly(!editable);
+        caracteristicas.setReadOnly(!editable);
+
+        // El botón guardar y cancelar solo aparecen en modo edición o asignación activa
+        guardar.setVisible(editable || empresaAsignada.isEnabled());
+        cancelar.setVisible(editable || empresaAsignada.isEnabled());
+        editar.setVisible(!editable);
+
+        if (editable) { //oculto el desasignar si entra en modo edicion
+            desasignar.setVisible(false);
+        }
+    }
+
     private void accionGuardar() {
         try {
             Lote lote = grid.asSingleSelect().getValue();
+            if (lote == null) return;
 
-            if (lote == null) {
-                return;
-            }
-            // writeBeanIfValid toma los datos ingresados en la pantalla, los pasa al objeto lote
-            // y ejecuta automaticamente las anotaciones (@NotBlank, @Positive, etc.) del modelo
             if (binder.writeBeanIfValid(lote)) {
-
-                // Si el formulario es valido, aplicamos las reglas de negocio de la vista
                 if (empresaAsignada.getValue() != null) {
                     lote.setEmpresa(empresaAsignada.getValue());
-
                     if (lote.getEstado() == EstadoLote.LIBRE) {
                         lote.setEstado(EstadoLote.OCUPADO);
-                        lote.setFechaAsignacion(LocalDate.now());
+                        // Suponiendo que lote tiene setFechaRadicacion o setFechaAsignacion
                     }
                 } else {
                     lote.setEmpresa(null);
-                    lote.setFechaAsignacion(null);
                     lote.setEstado(EstadoLote.LIBRE);
                 }
 
-                // Persistimos el lote validado de forma directa
                 loteService.guardar(lote);
-
-                Notification.show("Lote guardado con éxito", 3000, Notification.Position.TOP_CENTER)
+                Notification.show("Cambios aplicados correctamente", 3000, Notification.Position.TOP_CENTER)
                         .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
                 actualizarTabla();
                 limpiarFormulario();
-
             } else {
-                // Si el usuario ingresa datos invalidos los campos se ponen rojo con los mensajes y muestra la notificacion:
                 Notification.show("Por favor, revise los campos marcados en rojo", 3000, Notification.Position.TOP_CENTER)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
-
         } catch (Exception e) {
             Notification.show("Error al guardar: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+    }
+
+    private void accionDesasignar() {
+        Lote lote = grid.asSingleSelect().getValue();
+        if (lote == null) return;
+
+        // Doble seguridad por las dudas
+        if (lote.getEmpresa() == null) {
+            Notification.show("Este lote no tiene ninguna empresa asignada.");
+            return;
+        }
+
+        try {
+            // Hacemos la desasignación física en el objeto
+            lote.setEmpresa(null);
+            lote.setEstado(EstadoLote.LIBRE);
+            lote.setFechaAsignacion(null);
+            // Si tenés setFechaAsignacion(null), agregalo acá también
+
+            // Guardamos el cambio en la base de datos
+            loteService.guardar(lote);
+
+            Notification.show("Empresa desasignada con éxito", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+            actualizarTabla();
+            limpiarFormulario();
+        } catch (Exception e) {
+            Notification.show("Error al desasignar: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+    }
+
+    private void accionEliminar() {
+        Lote lote = grid.asSingleSelect().getValue();
+        if (lote == null) return;
+
+        if (lote.getEmpresa() != null) {
+            Notification.show("No se puede eliminar un lote que tiene una empresa asignada", 4000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        try {
+            loteService.eliminar(lote);
+            Notification.show("Lote eliminado con éxito", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            actualizarTabla();
+            limpiarFormulario();
+        } catch (Exception e) {
+            Notification.show("Error al eliminar: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
@@ -180,10 +243,10 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
             limpiarFormulario();
         } else {
             binder.setBean(lote);
-            binder.getFields().forEach(field -> ((com.vaadin.flow.component.HasValidation) field).setInvalid(false));
-
-            // Cargamos siempre todas las empresas aprobadas del Parque
             empresaAsignada.setItems(empresaService.listarTodasLasAprobadas());
+
+            // Bloqueamos los atributos estructurales por defecto al seleccionar de la tabla
+            activarModoEdicion(false);
 
             switch (lote.getEstado()) {
                 case LIBRE:
@@ -191,39 +254,33 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
                     empresaAsignada.setEnabled(true);
                     empresaAsignada.setHelperText("Seleccione una empresa");
                     break;
-
                 case RESERVADO:
-                    empresaAsignada.setValue(lote.getEmpresa());
-                    empresaAsignada.setEnabled(true);
-                    empresaAsignada.setHelperText("Reserva en tramite. Se puede modificar o remover la empresa si es necesario");
-                    break;
-
                 case OCUPADO:
-                    empresaAsignada.setValue(lote.getEmpresa());
-                    empresaAsignada.setEnabled(false);
-                    empresaAsignada.setHelperText("Lote activo");
-                    break;
-
                 case OCIOSO:
                     empresaAsignada.setValue(lote.getEmpresa());
-                    empresaAsignada.setEnabled(false);
-                    empresaAsignada.setHelperText("⚠️ Lote bajo alerta por inactividad");
+                    empresaAsignada.setEnabled(lote.getEstado() == EstadoLote.RESERVADO);
+                    empresaAsignada.setHelperText(lote.getEstado() == EstadoLote.OCUPADO ? "Lote activo" : "Lote bajo alerta o reserva");
                     break;
             }
+
+            // Si el selector de empresa está habilitado, mostramos guardar/cancelar para confirmar asignación
+            guardar.setVisible(empresaAsignada.isEnabled());
+            cancelar.setVisible(true);
+            desasignar.setVisible(lote.getEmpresa() != null);
             panelEdicion.setVisible(true);
+
+
         }
     }
 
     private void limpiarFormulario() {
         binder.setBean(null);
         empresaAsignada.setValue(null);
-        empresaAsignada.setEnabled(true);// Lo rehabilitamos para la próxima seleccion
         grid.asSingleSelect().clear();
         panelEdicion.setVisible(false);
     }
 
     private void actualizarTabla() {
-//        grid.setItems(loteService.listarTodos());
         if (filtroEstado != null && filtroEstado.getValue() != null) {
             filtrarLotes();
         } else {
@@ -234,46 +291,32 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
     private void filtrarLotes() {
         EstadoLote estadoSeleccionado = filtroEstado.getValue();
         if (estadoSeleccionado == null) {
-            // Si se limpió el combo, mostramos todos de forma directa sin volver a evaluar
             grid.setItems(loteService.listarTodos());
         } else {
-            grid.setItems(loteService.buscarPorEstado(estadoSeleccionado));
+            // Se asume que la implementación de filtrado correspondiente existe en loteService
+            grid.setItems(loteService.listarTodos().stream().filter(l -> l.getEstado() == estadoSeleccionado).toList());
         }
     }
 
     private void tablaPrincipalLotes() {
         grid.setSizeFull();
-
         grid.addColumn(Lote::getManzana).setHeader("Manzana").setSortable(true);
         grid.addColumn(Lote::getNroLote).setHeader("Nro. Lote").setSortable(true);
         grid.addColumn(Lote::getUbicacion).setHeader("Ubicación");
         grid.addColumn(lote -> lote.getSuperficie() + " m²").setHeader("Superficie");
-        // empresa asignada al lote
         grid.addColumn(lote -> lote.getEmpresa() != null ? lote.getEmpresa().getRazonSocial() : "Sin Asignar")
-                .setHeader("Empresa Asignada")
-                .setSortable(true);
+                .setHeader("Empresa Asignada").setSortable(true);
         grid.addColumn(Lote::getCaracteristicas).setHeader("Características");
-        
+
         grid.addComponentColumn(lote -> {
             com.vaadin.flow.component.html.Span badge = new com.vaadin.flow.component.html.Span(lote.getEstado().toString());
             badge.getElement().getThemeList().add("badge");
-
             switch (lote.getEstado()) {
-                case LIBRE:
-                    badge.getElement().getThemeList().add("badge success");
-                    break;
-                case RESERVADO:
-                    badge.getElement().getThemeList().add("badge");
-                    badge.getStyle().set("background-color", "#fff3e0").set("color", "#b78103");
-                    break;
-                case OCUPADO:
-                    badge.getStyle().set("background-color", "#e0f7fa").set("color", "#006064");
-                    break;
-                case OCIOSO:
-                    badge.getElement().getThemeList().add("badge error");
-                    break;
+                case LIBRE: badge.getElement().getThemeList().add("badge success"); break;
+                case RESERVADO: badge.getStyle().set("background-color", "#fff3e0").set("color", "#b78103"); break;
+                case OCUPADO: badge.getStyle().set("background-color", "#e0f7fa").set("color", "#006064"); break;
+                case OCIOSO: badge.getElement().getThemeList().add("badge error"); break;
             }
-
             return badge;
         }).setHeader("Estado").setSortable(true);
 
