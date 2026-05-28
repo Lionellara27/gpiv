@@ -131,32 +131,43 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
 
     private void accionGuardar() {
         try {
-            Lote lote = binder.getBean(); // Fila del lote seleccionado o editado
+            Lote lote = grid.asSingleSelect().getValue();
 
-            if (empresaAsignada.getValue() != null) {
-                // Asignamos la empresa elegida (puede ser la primera o una nueva)
-                lote.setEmpresa(empresaAsignada.getValue());
-
-                // Si estaba libre, ahora pasa a estar ocupado y le clavamos la fecha de hoy
-                if (lote.getEstado() == EstadoLote.LIBRE) {
-                    lote.setEstado(EstadoLote.OCUPADO);
-                    lote.setFechaAsignacion(LocalDate.now());
-                }
-            } else {
-                // Si el combo está vacío, significa que desvincularon la empresa del lote
-                lote.setEmpresa(null);
-                lote.setFechaAsignacion(null);
-                lote.setEstado(EstadoLote.LIBRE);
+            if (lote == null) {
+                return;
             }
+            // writeBeanIfValid toma los datos ingresados en la pantalla, los pasa al objeto lote
+            // y ejecuta automaticamente las anotaciones (@NotBlank, @Positive, etc.) del modelo
+            if (binder.writeBeanIfValid(lote)) {
 
-            // Persistimos el lote de forma directa
-            loteService.guardar(lote);
+                // Si el formulario es valido, aplicamos las reglas de negocio de la vista
+                if (empresaAsignada.getValue() != null) {
+                    lote.setEmpresa(empresaAsignada.getValue());
 
-            Notification.show("Lote guardado con éxito", 3000, Notification.Position.TOP_CENTER)
-                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                    if (lote.getEstado() == EstadoLote.LIBRE) {
+                        lote.setEstado(EstadoLote.OCUPADO);
+                        lote.setFechaAsignacion(LocalDate.now());
+                    }
+                } else {
+                    lote.setEmpresa(null);
+                    lote.setFechaAsignacion(null);
+                    lote.setEstado(EstadoLote.LIBRE);
+                }
 
-            actualizarTabla();
-            limpiarFormulario();
+                // Persistimos el lote validado de forma directa
+                loteService.guardar(lote);
+
+                Notification.show("Lote guardado con éxito", 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+                actualizarTabla();
+                limpiarFormulario();
+
+            } else {
+                // Si el usuario ingresa datos invalidos los campos se ponen rojo con los mensajes y muestra la notificacion:
+                Notification.show("Por favor, revise los campos marcados en rojo", 3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
 
         } catch (Exception e) {
             Notification.show("Error al guardar: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER)
@@ -169,6 +180,7 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
             limpiarFormulario();
         } else {
             binder.setBean(lote);
+            binder.getFields().forEach(field -> ((com.vaadin.flow.component.HasValidation) field).setInvalid(false));
 
             // Cargamos siempre todas las empresas aprobadas del Parque
             empresaAsignada.setItems(empresaService.listarTodasLasAprobadas());

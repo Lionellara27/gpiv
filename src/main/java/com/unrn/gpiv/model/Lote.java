@@ -2,7 +2,7 @@ package com.unrn.gpiv.model;
 
 import com.unrn.gpiv.common.EstadoLote;
 import jakarta.persistence.*;
-
+import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -15,17 +15,23 @@ public class Lote {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "La manzana es obligatoria")
     @Column(nullable = false)
     private String manzana;
 
+    @NotBlank(message = "El numero de lote es obligatorio")
     @Column(name = "nro_lote", nullable = false) // Usamos snake_case para la DB
     private String nroLote;
 
+    @Size(max = 255, message = "La ubicacion no puede superar los 255 caracteres")
     private String ubicacion;
 
+    @NotNull(message = "La superficie no puede estar vacia")
+    @Positive(message = "La superficie debe ser un numero mayor a cero")
     @Column(nullable = false)
     private Double superficie;
 
+    @NotNull(message = "El estado del lote es obligatorio")
     @Enumerated(EnumType.STRING)
     private EstadoLote estado = EstadoLote.LIBRE;
 
@@ -44,6 +50,7 @@ public class Lote {
     @JoinColumn(name = "empresa_id")
     private Empresa empresa;
 
+    @PastOrPresent(message = "La fecha de asignacion no puede ser futura")
     @Column(name = "fechaAsignacion")  // fecha de asignacion del lote a la empresa
     private LocalDate fechaAsignacion;
 

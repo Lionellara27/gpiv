@@ -1,7 +1,6 @@
 package com.unrn.gpiv.views.admin;
 
 import com.unrn.gpiv.model.Lote;
-import com.unrn.gpiv.common.EstadoLote;
 import com.unrn.gpiv.service.LoteService;
 import com.unrn.gpiv.views.MainLayout;
 import com.vaadin.flow.component.button.Button;
@@ -36,13 +35,6 @@ public class RegistrarLotesView extends VerticalLayout {
 		add(new H2("Registrar Nuevo Lote"));
 
 		FormLayout form = new FormLayout(manzana, nroLote, ubicacion, superficie, caracteristicas);
-
-		// Vinculacion manual
-		binder.forField(manzana).asRequired("La manzana es obligatoria").bind(Lote::getManzana, Lote::setManzana);
-		binder.forField(nroLote).asRequired("El número es obligatorio").bind(Lote::getNroLote, Lote::setNroLote);
-		binder.forField(superficie).asRequired("La superficie es obligatoria").bind(Lote::getSuperficie, Lote::setSuperficie);
-
-		// Los que no son obligatorios pueden ir con el automatico o manual
 		binder.bindInstanceFields(this);
 
 		Button guardar = new Button("Registrar Lote", e -> guardarNuevoLote());
