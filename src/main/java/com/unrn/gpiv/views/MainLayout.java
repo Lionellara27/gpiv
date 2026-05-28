@@ -105,10 +105,23 @@ public class MainLayout extends AppLayout {
                     operacionesSection.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Top.MEDIUM);
                     menu.add(operacionesSection);
 
+                    if (logueado.getEmpresa() != null && !logueado.getEmpresa().getLotesAsignados().isEmpty()) {
+
+                        // Le cambiamos el nombre a la variable para que no tire error
+                        Span tituloAvance = new Span("OPERACIONES INDUSTRIALES");
+                        tituloAvance.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Top.MEDIUM);
+                        menu.add(tituloAvance);
+
+                        // Nuestro botón unificado que lleva a las 3 pestañas
+                        menu.add(crearLink(AvancesObraView.class, VaadinIcon.CHART_TIMELINE, " Mi Avance"));
+                    }
+
+                    /*
                     menu.add(crearLink(AvancesObraView.class, VaadinIcon.CLIPBOARD_CHECK, " Avances de Obra"));
                     menu.add(crearLink(ControlPersonalView.class, VaadinIcon.USERS, " Control de Personal"));
                     menu.add(crearLink(FlotaVehiculosView.class, VaadinIcon.TRUCK, " Flota de Vehículos"));
                     menu.add(crearLink(MedicionConsumosView.class, VaadinIcon.DASHBOARD, " Medición de Consumos"));
+*/
                 }
             }
         }
