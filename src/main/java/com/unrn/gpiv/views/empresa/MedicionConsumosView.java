@@ -90,15 +90,24 @@ public class MedicionConsumosView extends VerticalLayout {
             return;
         }
 
+        // 1. RECARGAMOS LA EMPRESA FRESCA (Anti-clonación)
+        this.empresaActual = empresaService.obtenerEmpresaPorRepresentante(empresaActual.getRepresentante());
+
         ConsumoMensual nuevoConsumo = new ConsumoMensual();
         nuevoConsumo.setMesAnio(txtMes.getValue());
         nuevoConsumo.setConsumoLuz(numLuz.getValue());
         nuevoConsumo.setConsumoAgua(numAgua.getValue());
         nuevoConsumo.setConsumoGas(numGas.getValue());
-        nuevoConsumo.setEmpresa(empresaActual);
+        nuevoConsumo.setEmpresa(this.empresaActual);
 
-        empresaActual.getConsumosMensuales().add(nuevoConsumo);
-        empresaService.actualizarEmpresa(empresaActual);
+        // 2. Agregamos a la lista fresca
+        this.empresaActual.getConsumosMensuales().add(nuevoConsumo);
+
+        // 3. Guardamos la empresa
+        empresaService.actualizarEmpresa(this.empresaActual);
+
+        // 4. VOLVEMOS A RECARGAR (Para obtener el ID generado por PostgreSQL)
+        this.empresaActual = empresaService.obtenerEmpresaPorRepresentante(empresaActual.getRepresentante());
 
         txtMes.clear();
         numLuz.clear();
@@ -109,8 +118,17 @@ public class MedicionConsumosView extends VerticalLayout {
     }
 
     private void eliminarConsumo(ConsumoMensual consumo) {
-        empresaActual.getConsumosMensuales().remove(consumo);
-        empresaService.actualizarEmpresa(empresaActual);
+        // 1. Recargamos versión fresca
+        this.empresaActual = empresaService.obtenerEmpresaPorRepresentante(empresaActual.getRepresentante());
+
+        // 2. Buscamos el consumo exacto por ID y lo borramos de la lista
+        this.empresaActual.getConsumosMensuales().removeIf(c -> c.getId() != null && c.getId().equals(consumo.getId()));
+
+        // 3. Guardamos los cambios
+        empresaService.actualizarEmpresa(this.empresaActual);
+
+        // 4. Recargamos para actualizar grilla
+        this.empresaActual = empresaService.obtenerEmpresaPorRepresentante(empresaActual.getRepresentante());
         actualizarGrilla();
         Notification.show("Registro de consumo eliminado");
     }

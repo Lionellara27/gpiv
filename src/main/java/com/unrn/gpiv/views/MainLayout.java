@@ -3,6 +3,7 @@ package com.unrn.gpiv.views;
 import com.unrn.gpiv.common.Rol;
 import com.unrn.gpiv.common.EstadoSolicitud;
 import com.unrn.gpiv.common.EstadoEmpresa;
+import com.unrn.gpiv.model.Empresa;
 import com.unrn.gpiv.model.SolicitudRadicacion;
 import com.unrn.gpiv.model.Usuario;
 import com.unrn.gpiv.model.RepresentanteEmpresa;
@@ -86,7 +87,7 @@ public class MainLayout extends AppLayout {
         // =====================================================================
         if (usuario.getRol() == Rol.EMPRESA && usuario instanceof RepresentanteEmpresa logueado) {
 
-            Span empresaSection = new Span("ADMINISTRACIÓN\n");
+            Span empresaSection = new Span("ADMINISTRACIÓN");
             empresaSection.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Top.MEDIUM);
             menu.add(empresaSection);
 
@@ -99,34 +100,22 @@ public class MainLayout extends AppLayout {
                     menu.add(crearLink(MiEmpresaView.class, VaadinIcon.BUILDING, " Mi Empresa"));
                 }
 
-    // >>>>>>>>>>> cambie la condicion "logueado.getEmpresa().getLoteAsignado() != null" por que la empresa ya no tiene un solo lote asignado, esta puede tener varios lotes
-                if (logueado.getEmpresa() != null && !logueado.getEmpresa().getLotesAsignados().isEmpty()) {
+                // 🚀 LA MAGIA PARA EL F5: Le pedimos a la BD la empresa actualizada SIEMPRE
+                Empresa empresaFresca = empresaService.obtenerEmpresaPorRepresentante(logueado);
 
-                    Span operacionesSection = new Span("OPERACIONES INDUSTRIALES");
-                    operacionesSection.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Top.MEDIUM);
-                    menu.add(operacionesSection);
+                // Verificamos si la empresa fresca ya tiene lotes
+                if (empresaFresca != null && !empresaFresca.getLotesAsignados().isEmpty()) {
 
-                    if (logueado.getEmpresa() != null && !logueado.getEmpresa().getLotesAsignados().isEmpty()) {
+                    // UN SOLO SPAN (Para que no salga duplicado)
+                    Span tituloAvance = new Span("OPERACIONES INDUSTRIALES");
+                    tituloAvance.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Top.MEDIUM);
+                    menu.add(tituloAvance);
 
-                        // Le cambiamos el nombre a la variable para que no tire error
-                        Span tituloAvance = new Span("OPERACIONES INDUSTRIALES");
-                        tituloAvance.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Top.MEDIUM);
-                        menu.add(tituloAvance);
-
-                        // Nuestro botón unificado que lleva a las 3 pestañas
-                        menu.add(crearLink(AvancesObraView.class, VaadinIcon.CHART_TIMELINE, " Mi Avance"));
-                    }
-
-                    /*
-                    menu.add(crearLink(AvancesObraView.class, VaadinIcon.CLIPBOARD_CHECK, " Avances de Obra"));
-                    menu.add(crearLink(ControlPersonalView.class, VaadinIcon.USERS, " Control de Personal"));
-                    menu.add(crearLink(FlotaVehiculosView.class, VaadinIcon.TRUCK, " Flota de Vehículos"));
-                    menu.add(crearLink(MedicionConsumosView.class, VaadinIcon.DASHBOARD, " Medición de Consumos"));
-*/
+                    // Nuestro botón unificado que lleva a las 3 pestañas
+                    menu.add(crearLink(AvancesObraView.class, VaadinIcon.CHART_TIMELINE, " Mi Avance"));
                 }
             }
         }
-
         // 🟢 ARREGLADO: El menú se agrega al contenedor lateral y cerramos el método limpiamente
         addToDrawer(menu);
     }
