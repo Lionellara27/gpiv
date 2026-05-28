@@ -38,6 +38,23 @@ public class Empresa {
 
     private boolean datosFinalesCompletos = false;
 
+    // --- NUEVOS CAMPOS Y RELACIONES PARA LA HU 4 (aVANCE) ---
+
+    @Lob
+    private byte[] logo; // Imagen del logo de la empresa
+
+    @Column(columnDefinition = "TEXT")
+    private String descripcionPublica; // La descripción para el perfil
+
+    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Empleado> empleados = new ArrayList<>();
+
+    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Vehiculo> vehiculos = new ArrayList<>();
+
+    @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ConsumoMensual> consumosMensuales = new ArrayList<>();
+
     // --- RELACIONES CORE ---
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -150,4 +167,22 @@ public class Empresa {
     public void setDatosFinalesCompletos(boolean datosFinalesCompletos) {
         this.datosFinalesCompletos = datosFinalesCompletos;
     }
+
+    //parte nueva para los avances
+    // --- GETTERS Y SETTERS HU 4 ---
+
+    public byte[] getLogo() { return logo; }
+    public void setLogo(byte[] logo) { this.logo = logo; }
+
+    public String getDescripcionPublica() { return descripcionPublica; }
+    public void setDescripcionPublica(String descripcionPublica) { this.descripcionPublica = descripcionPublica; }
+
+    public List<Empleado> getEmpleados() { return empleados; }
+    public void setEmpleados(List<Empleado> empleados) { this.empleados = empleados; }
+
+    public List<Vehiculo> getVehiculos() { return vehiculos; }
+    public void setVehiculos(List<Vehiculo> vehiculos) { this.vehiculos = vehiculos; }
+
+    public List<ConsumoMensual> getConsumosMensuales() { return consumosMensuales; }
+    public void setConsumosMensuales(List<ConsumoMensual> consumosMensuales) { this.consumosMensuales = consumosMensuales; }
 }

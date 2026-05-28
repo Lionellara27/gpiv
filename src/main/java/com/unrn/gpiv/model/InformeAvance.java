@@ -37,6 +37,15 @@ public class InformeAvance {
     // Constructor vacío (obligatorio)
     public InformeAvance() {}
 
+    // --- CAMPOS NUEVOS PARA LA HU 4 ---
+    private String titulo; // Ej: "Finalización de cerramiento perimetral"
+
+    @Lob // Para guardar el PDF en la base de datos
+    private byte[] archivoPdf;
+
+    private String nombreArchivoPdf;
+
+
     // --- GETTERS Y SETTERS ---
 
     public Long getId() { return id; }
@@ -59,4 +68,14 @@ public class InformeAvance {
 
     public Empresa getEmpresa() { return empresa; }
     public void setEmpresa(Empresa empresa) { this.empresa = empresa; }
+
+//parte nueva para infome pro
+    public String getTitulo() { return titulo; }
+    public void setTitulo(String titulo) { this.titulo = titulo; }
+
+    public byte[] getArchivoPdf() { return archivoPdf; }
+    public void setArchivoPdf(byte[] archivoPdf) { this.archivoPdf = archivoPdf; }
+
+    public String getNombreArchivoPdf() { return nombreArchivoPdf; }
+    public void setNombreArchivoPdf(String nombreArchivoPdf) { this.nombreArchivoPdf = nombreArchivoPdf; }
 }
