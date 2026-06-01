@@ -63,16 +63,22 @@ public class FlotaVehiculosView extends VerticalLayout {
             return;
         }
 
+        // 1. RECARGAMOS LA EMPRESA FRESCA (Anti-clonación)
+        this.empresaActual = empresaService.obtenerEmpresaPorRepresentante(empresaActual.getRepresentante());
+
         Vehiculo nuevoVehiculo = new Vehiculo();
         nuevoVehiculo.setPatente(txtPatente.getValue().toUpperCase()); // Pasamos la patente a mayúsculas para que quede prolijo
         nuevoVehiculo.setTipo(txtTipo.getValue());
-        nuevoVehiculo.setEmpresa(empresaActual);
+        nuevoVehiculo.setEmpresa(this.empresaActual);
 
-        // Agregamos a la lista de la empresa
-        empresaActual.getVehiculos().add(nuevoVehiculo);
+        // 2. Agregamos a la lista de la empresa fresca
+        this.empresaActual.getVehiculos().add(nuevoVehiculo);
 
-        // Guardamos la empresa
-        empresaService.actualizarEmpresa(empresaActual);
+        // 3. Guardamos la empresa
+        empresaService.actualizarEmpresa(this.empresaActual);
+
+        // 4. VOLVEMOS A RECARGAR (Para obtener el ID generado por PostgreSQL)
+        this.empresaActual = empresaService.obtenerEmpresaPorRepresentante(empresaActual.getRepresentante());
 
         // Limpiamos y actualizamos
         txtPatente.clear();
@@ -82,8 +88,17 @@ public class FlotaVehiculosView extends VerticalLayout {
     }
 
     private void eliminarVehiculo(Vehiculo vehiculo) {
-        empresaActual.getVehiculos().remove(vehiculo);
-        empresaService.actualizarEmpresa(empresaActual);
+        // 1. Recargamos versión fresca
+        this.empresaActual = empresaService.obtenerEmpresaPorRepresentante(empresaActual.getRepresentante());
+
+        // 2. Buscamos el vehículo exacto por ID y lo borramos de la lista
+        this.empresaActual.getVehiculos().removeIf(v -> v.getId() != null && v.getId().equals(vehiculo.getId()));
+
+        // 3. Guardamos los cambios
+        empresaService.actualizarEmpresa(this.empresaActual);
+
+        // 4. Recargamos para actualizar grilla
+        this.empresaActual = empresaService.obtenerEmpresaPorRepresentante(empresaActual.getRepresentante());
         actualizarGrilla();
         Notification.show("Vehículo eliminado");
     }

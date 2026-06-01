@@ -63,16 +63,22 @@ public class ControlPersonalView extends VerticalLayout {
             return;
         }
 
+        // 1. RECARGAMOS LA EMPRESA FRESCA (Anti-clonación)
+        this.empresaActual = empresaService.obtenerEmpresaPorRepresentante(empresaActual.getRepresentante());
+
         Empleado nuevoEmpleado = new Empleado();
         nuevoEmpleado.setNombre(txtNombre.getValue());
         nuevoEmpleado.setCargo(txtCargo.getValue());
-        nuevoEmpleado.setEmpresa(empresaActual);
+        nuevoEmpleado.setEmpresa(this.empresaActual);
 
-        // Agregamos a la lista de la empresa
-        empresaActual.getEmpleados().add(nuevoEmpleado);
+        // 2. Agregamos a la lista de la empresa fresca
+        this.empresaActual.getEmpleados().add(nuevoEmpleado);
 
-        // Guardamos la empresa entera (esto guarda al empleado por el CascadeType.ALL)
-        empresaService.actualizarEmpresa(empresaActual);
+        // 3. Guardamos la empresa
+        empresaService.actualizarEmpresa(this.empresaActual);
+
+        // 4. VOLVEMOS A RECARGAR (Para obtener el ID generado por PostgreSQL)
+        this.empresaActual = empresaService.obtenerEmpresaPorRepresentante(empresaActual.getRepresentante());
 
         // Limpiamos y actualizamos
         txtNombre.clear();
@@ -82,8 +88,17 @@ public class ControlPersonalView extends VerticalLayout {
     }
 
     private void eliminarEmpleado(Empleado empleado) {
-        empresaActual.getEmpleados().remove(empleado);
-        empresaService.actualizarEmpresa(empresaActual);
+        // 1. Recargamos versión fresca
+        this.empresaActual = empresaService.obtenerEmpresaPorRepresentante(empresaActual.getRepresentante());
+
+        // 2. Buscamos el empleado exacto por ID y lo borramos de la lista
+        this.empresaActual.getEmpleados().removeIf(e -> e.getId() != null && e.getId().equals(empleado.getId()));
+
+        // 3. Guardamos los cambios
+        empresaService.actualizarEmpresa(this.empresaActual);
+
+        // 4. Recargamos para actualizar grilla
+        this.empresaActual = empresaService.obtenerEmpresaPorRepresentante(empresaActual.getRepresentante());
         actualizarGrilla();
         Notification.show("Empleado eliminado");
     }
