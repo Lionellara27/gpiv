@@ -80,6 +80,14 @@ public class ProyectoProductivo {
 
     public ProyectoProductivo() {
     }
+
+    public String getNombre(){
+        return nombreProyecto;
+    }
+
+    public String getCategoria(){
+        return rubro;
+    }
 }
 
 /*package com.unrn.gpiv.model;

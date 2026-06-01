@@ -1,5 +1,77 @@
 package com.unrn.gpiv.views.admin;
 
+import com.unrn.gpiv.model.Empresa;
+import com.unrn.gpiv.service.EmpresaService;
+import com.unrn.gpiv.views.MainLayout;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.BeforeEnterEvent;
+import com.vaadin.flow.router.BeforeEnterObserver;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
+
+@PageTitle("Informes de Empresas | SGPIV")
+@Route(value = "admin/informes-empresas", layout = MainLayout.class)
+public class InformesEmpresasView extends VerticalLayout implements BeforeEnterObserver {
+
+    private final EmpresaService empresaService;
+    private Grid<Empresa> grid = new Grid<>(Empresa.class, false);
+
+    public InformesEmpresasView(EmpresaService empresaService) {
+        this.empresaService = empresaService;
+
+        setSizeFull();
+        setPadding(true);
+        setSpacing(true);
+        getStyle().set("background-color", "#f5f7fa");
+
+        H2 titulo = new H2("Listado de Empresas Radicadas");
+
+        configurarTabla();
+
+        add(titulo, grid);
+        actualizarTabla();
+    }
+
+    private void configurarTabla() {
+        grid.setSizeFull();
+
+        grid.addColumn(Empresa::getId).setHeader("ID").setSortable(true);
+        grid.addColumn(Empresa::getRazonSocial).setHeader("Razón Social").setSortable(true);
+        grid.addColumn(Empresa::getCuit).setHeader("CUIT");
+        grid.addColumn(Empresa::getDireccion).setHeader("Dirección Legal");
+
+        // Mostramos el Estado de Solicitud/Radicación usando un Badge simple
+        grid.addColumn(empresa -> empresa.getEstado() != null ? empresa.getEstado().toString() : "PENDIENTE")
+                .setHeader("Estado");
+
+        // Botón "el ojito" para navegar al detalle usando el ID real
+        grid.addComponentColumn(empresa -> {
+            Button btnDetalle = new Button("Ver Detalle", VaadinIcon.EYE.create());
+            btnDetalle.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            btnDetalle.addClickListener(e ->
+                    getUI().ifPresent(ui -> ui.navigate(EmpresaDetalleView.class, empresa.getId()))
+            );
+            return btnDetalle;
+        }).setHeader("Acciones");
+
+        grid.getColumns().forEach(c -> c.setAutoWidth(true));
+    }
+
+    private void actualizarTabla() {
+        grid.setItems(empresaService.obtenerTodasLasEmpresas());
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        actualizarTabla();
+    }
+}
+/*
 import com.unrn.gpiv.views.MainLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -166,3 +238,4 @@ public class InformesEmpresasView extends VerticalLayout {
         return item;
     }
 }
+ */

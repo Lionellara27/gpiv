@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class EmpresaService {
@@ -203,5 +204,31 @@ public Empresa obtenerEmpresaPorRepresentante(RepresentanteEmpresa rep) {
     @Transactional(readOnly = true)
     public List<Empresa> obtenerTodasLasEmpresas() {
         return empresaRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Empresa> obtenerEmpresaCompletaPorId(Long id) {
+        Optional<Empresa> empresaOpt = empresaRepository.findById(id);
+
+        empresaOpt.ifPresent(empresa -> {
+            // Inicializamos las colecciones LAZY para usarlas en la vista de detalle
+            if (empresa.getProyecto() != null) {
+                org.hibernate.Hibernate.initialize(empresa.getProyecto());
+            }
+            org.hibernate.Hibernate.initialize(empresa.getLotesAsignados());
+            org.hibernate.Hibernate.initialize(empresa.getInformesDeAvance());
+            org.hibernate.Hibernate.initialize(empresa.getHerramientasAportadas());
+            org.hibernate.Hibernate.initialize(empresa.getHerramientasPrestadas());
+
+            // Inicializamos los ítems dentro de cada recurso para conocer su nombre/categoría
+            empresa.getHerramientasAportadas().forEach(r -> {
+                if (r.getItem() != null) org.hibernate.Hibernate.initialize(r.getItem());
+            });
+            empresa.getHerramientasPrestadas().forEach(r -> {
+                if (r.getItem() != null) org.hibernate.Hibernate.initialize(r.getItem());
+            });
+        });
+
+        return empresaOpt;
     }
 }
