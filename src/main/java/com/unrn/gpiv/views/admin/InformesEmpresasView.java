@@ -1,5 +1,6 @@
 package com.unrn.gpiv.views.admin;
 
+import com.unrn.gpiv.common.EstadoEmpresa;
 import com.unrn.gpiv.model.Empresa;
 import com.unrn.gpiv.service.EmpresaService;
 import com.unrn.gpiv.views.MainLayout;
@@ -43,13 +44,32 @@ public class InformesEmpresasView extends VerticalLayout implements BeforeEnterO
         grid.addColumn(Empresa::getId).setHeader("ID").setSortable(true);
         grid.addColumn(Empresa::getRazonSocial).setHeader("Razón Social").setSortable(true);
         grid.addColumn(Empresa::getCuit).setHeader("CUIT");
-        grid.addColumn(Empresa::getDireccion).setHeader("Dirección Legal");
 
-        // Mostramos el Estado de Solicitud/Radicación usando un Badge simple
-        grid.addColumn(empresa -> empresa.getEstado() != null ? empresa.getEstado().toString() : "PENDIENTE")
-                .setHeader("Estado");
+        // 1. Estado del Trámite Interno (Solicitud)
+        grid.addColumn(Empresa::getEstado).setHeader("Estado Solicitud").setSortable(true);
 
-        // Botón "el ojito" para navegar al detalle usando el ID real
+        // 2. 🟢 Estado Operativo Real (Tu nuevo Enum de Empresa) utilizando Badges visuales
+        grid.addComponentColumn(empresa -> {
+            com.vaadin.flow.component.html.Span badge = new com.vaadin.flow.component.html.Span();
+            EstadoEmpresa est = empresa.getEstadoEmpresa() != null ? empresa.getEstadoEmpresa() : EstadoEmpresa.INTERESADA;
+            badge.setText(est.toString());
+            badge.getElement().getThemeList().add("badge");
+
+            switch (est) {
+                case INTERESADA:
+                    badge.getStyle().set("background-color", "#e0f7fa").set("color", "#006064"); // Celeste
+                    break;
+                case RADICADA:
+                    badge.getElement().getThemeList().add("success"); // Verde estándar Lumo
+                    break;
+                case TITULADA:
+                    badge.getStyle().set("background-color", "#f3e5f5").set("color", "#4a148c"); // Violeta premium
+                    break;
+            }
+            return badge;
+        }).setHeader("Condición en Parque").setSortable(true);
+
+        // Acciones (Ojito)
         grid.addComponentColumn(empresa -> {
             Button btnDetalle = new Button("Ver Detalle", VaadinIcon.EYE.create());
             btnDetalle.addThemeVariants(ButtonVariant.LUMO_PRIMARY);

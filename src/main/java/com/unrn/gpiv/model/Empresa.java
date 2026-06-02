@@ -1,5 +1,6 @@
 package com.unrn.gpiv.model;
 
+import com.unrn.gpiv.common.EstadoEmpresa;
 import com.unrn.gpiv.common.EstadoSolicitud;
 import jakarta.persistence.*;
 import java.time.LocalDate;
@@ -16,6 +17,10 @@ public class Empresa {
 
     @Enumerated(EnumType.STRING)
     private EstadoSolicitud estado = EstadoSolicitud.PENDIENTE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_empresa", nullable = false)
+    private EstadoEmpresa estadoEmpresa = EstadoEmpresa.INTERESADA;
 
     @Column(nullable = false)
     private String razonSocial;
@@ -103,6 +108,14 @@ public class Empresa {
     }
 
     // --- GETTERS Y SETTERS ---
+
+    public EstadoEmpresa getEstadoEmpresa() {
+        return estadoEmpresa;
+    }
+
+    public void setEstadoEmpresa(EstadoEmpresa estadoEmpresa) {
+        this.estadoEmpresa = estadoEmpresa;
+    }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

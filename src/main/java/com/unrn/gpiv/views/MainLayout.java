@@ -2,7 +2,7 @@ package com.unrn.gpiv.views;
 
 import com.unrn.gpiv.common.Rol;
 import com.unrn.gpiv.common.EstadoSolicitud;
-import com.unrn.gpiv.common.EstadoEmpresa;
+//import com.unrn.gpiv.common.EstadoEmpresa;
 import com.unrn.gpiv.model.Empresa;
 import com.unrn.gpiv.model.SolicitudRadicacion;
 import com.unrn.gpiv.model.Usuario;

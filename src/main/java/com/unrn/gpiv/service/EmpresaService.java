@@ -1,5 +1,6 @@
 package com.unrn.gpiv.service;
 
+import com.unrn.gpiv.common.EstadoEmpresa;
 import com.unrn.gpiv.common.EstadoSolicitud;
 import com.unrn.gpiv.messaging.service.EmailService;
 import com.unrn.gpiv.model.*;
@@ -96,6 +97,7 @@ public class EmpresaService {
         nuevaEmpresa.setProyecto(solicitud.getProyecto());
         nuevaEmpresa.setTitulada(false);
         nuevaEmpresa.setEstado(EstadoSolicitud.APROBADA);
+        nuevaEmpresa.setEstadoEmpresa(EstadoEmpresa.RADICADA);
 
         if (solicitud.getRepresentante() != null && solicitud.getRepresentante().getCuitPersonal() != null) {
             nuevaEmpresa.setCuit(solicitud.getRepresentante().getCuitPersonal());
