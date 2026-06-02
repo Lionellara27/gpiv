@@ -28,7 +28,6 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
-import java.time.LocalDate;
 import java.util.Optional;
 
 @PageTitle("Gestión de Lotes | SGPIV")
@@ -122,7 +121,7 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
         eliminar.addClickListener(event -> accionEliminar());
 
         desasignar.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY); // Estilo rojo pero sutil
-        desasignar.addClickListener(event -> accionDesasignar());
+        desasignar.addClickListener(event -> accionDesadjudicar());
 
         HorizontalLayout accionesPrincipales = new HorizontalLayout(editar,desasignar, eliminar);
         HorizontalLayout barraGuardado = new HorizontalLayout(guardar, cancelar);
@@ -147,7 +146,6 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
         estado.setReadOnly(!editable);
         caracteristicas.setReadOnly(!editable);
 
-        // El botón guardar y cancelar solo aparecen en modo edición o asignación activa
         guardar.setVisible(editable || empresaAsignada.isEnabled());
         cancelar.setVisible(editable || empresaAsignada.isEnabled());
         editar.setVisible(!editable);
@@ -164,6 +162,8 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
             if (binder.writeBeanIfValid(lote)) {
                 if (empresaAsignada.getValue() != null) {
                     Empresa empresaAAsignar = empresaAsignada.getValue();
+
+                    // Seteamos la relación en el lote
                     lote.setEmpresa(empresaAAsignar);
 
                     if (lote.getEstado() == EstadoLote.LIBRE) {
@@ -171,26 +171,45 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
 
                         // Guarda en historial
                         historialService.registrarAsignacion(
-                                lote.getEmpresa().getRazonSocial(),
-                                lote.getEmpresa().getCuit(),
+                                empresaAAsignar.getRazonSocial(),
+                                empresaAAsignar.getCuit(),
                                 lote.getManzana(),
                                 lote.getNroLote()
                         );
                     }
 
-                    // 🟢 TRANSICIÓN DE ESTADO DE LA EMPRESA:
-                    // Si la empresa estaba como INTERESADA, ahora que tiene lote pasa a RADICADA
-                    if (empresaAAsignar.getEstadoEmpresa() == com.unrn.gpiv.common.EstadoEmpresa.INTERESADA) {
-                        empresaAAsignar.setEstadoEmpresa(com.unrn.gpiv.common.EstadoEmpresa.RADICADA);
-                        // Usamos el método existente en tu service para persistir el cambio en Supabase
-                        empresaService.actualizarEmpresa(empresaAAsignar);
+                    // Aseguramos que la empresa tenga el lote en su lista local antes de evaluar
+                    if (!empresaAAsignar.getLotesAsignados().contains(lote)) {
+                        empresaAAsignar.getLotesAsignados().add(lote);
                     }
 
+                    // TRANSICIÓN DE ESTADO DE LA EMPRESA:
+                    if (empresaAAsignar.getEstadoEmpresa() == com.unrn.gpiv.common.EstadoEmpresa.INTERESADA) {
+                        empresaAAsignar.setEstadoEmpresa(com.unrn.gpiv.common.EstadoEmpresa.RADICADA);
+                    }
+
+                    empresaService.actualizarEmpresa(empresaAAsignar);
+
                 } else {
+                    // Si se seleccionó "Ninguna", removemos el lote de la empresa que lo tenía antes
+                    if (lote.getEmpresa() != null) {
+                        Empresa empresaAnterior = lote.getEmpresa();
+                        Optional<Empresa> empCompletaOpt = empresaService.obtenerEmpresaCompletaPorId(empresaAnterior.getId());
+                        if (empCompletaOpt.isPresent()) {
+                            Empresa empCompleta = empCompletaOpt.get();
+                            empCompleta.getLotesAsignados().removeIf(l -> l.getId().equals(lote.getId()));
+
+                            if (empCompleta.getLotesAsignados().isEmpty() && empCompleta.getEstadoEmpresa() == EstadoEmpresa.RADICADA) {
+                                empCompleta.setEstadoEmpresa(EstadoEmpresa.INTERESADA);
+                            }
+                            empresaService.actualizarEmpresa(empCompleta);
+                        }
+                    }
                     lote.setEmpresa(null);
                     lote.setEstado(EstadoLote.LIBRE);
                 }
 
+                // Guardamos el lote
                 loteService.guardar(lote);
                 Notification.show("Cambios aplicados correctamente", 3000, Notification.Position.TOP_CENTER)
                         .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
@@ -245,51 +264,51 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
 //                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
 //        }
 //    }
-private void accionDesasignar() {
-    Lote lote = grid.asSingleSelect().getValue();
-    if (lote == null) return;
+    private void accionDesadjudicar() {
+        Lote lote = grid.asSingleSelect().getValue();
+        if (lote == null) return;
 
-    if (lote.getEmpresa() == null) {
-        Notification.show("Este lote no tiene ninguna empresa asignada.");
-        return;
-    }
-
-    try {
-        Empresa empresaAfectada = lote.getEmpresa();
-
-        // Antes de desasignar guarda en historial
-        historialService.registrarDesasignacion(lote.getManzana(), lote.getNroLote());
-
-        // Hacemos la desasignación física
-        lote.setEmpresa(null);
-        lote.setEstado(EstadoLote.LIBRE);
-        lote.setFechaAsignacion(null);
-
-        // Guardamos el cambio en el lote primero
-        loteService.guardar(lote);
-
-        // 🟢 CONTROL DE RETROCESO DE ESTADO:
-        // Volvemos a consultar la empresa completa para verificar si le quedan otros lotes activos
-        Optional<Empresa> empCompletaOpt = empresaService.obtenerEmpresaCompletaPorId(empresaAfectada.getId());
-        if (empCompletaOpt.isPresent()) {
-            Empresa empCompleta = empCompletaOpt.get();
-            // Si ya no tiene más lotes y figuraba como RADICADA, vuelve a ser INTERESADA
-            if (empCompleta.getLotesAsignados().isEmpty() && empCompleta.getEstadoEmpresa() == EstadoEmpresa.RADICADA) {
-                empCompleta.setEstadoEmpresa(EstadoEmpresa.INTERESADA);
-                empresaService.actualizarEmpresa(empCompleta);
-            }
+        if (lote.getEmpresa() == null) {
+            Notification.show("Este lote no tiene ninguna empresa asignada.");
+            return;
         }
 
-        Notification.show("Empresa desasignada con éxito", 3000, Notification.Position.TOP_CENTER)
-                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        try {
+            Empresa empresaAfectada = lote.getEmpresa();
 
-        actualizarTabla();
-        limpiarFormulario();
-    } catch (Exception e) {
-        Notification.show("Error al desasignar: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER)
-                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            // Antes de desasignar guarda en historial
+            historialService.registrarDesasignacion(lote.getManzana(), lote.getNroLote());
+
+            // Rompemos la relación en el objeto Lote
+            lote.setEmpresa(null);
+            lote.setEstado(EstadoLote.LIBRE);
+            lote.setFechaAsignacion(null);
+
+            loteService.guardar(lote);
+
+            Optional<Empresa> empCompletaOpt = empresaService.obtenerEmpresaCompletaPorId(empresaAfectada.getId());
+            if (empCompletaOpt.isPresent()) {
+                Empresa empCompleta = empCompletaOpt.get();
+
+                empCompleta.getLotesAsignados().removeIf(l -> l.getId().equals(lote.getId()));
+
+                // Si verdaderamente ya no le quedan otros lotes y figuraba como RADICADA, vuelve a ser INTERESADA
+                if (empCompleta.getLotesAsignados().isEmpty() && empCompleta.getEstadoEmpresa() == EstadoEmpresa.RADICADA) {
+                    empCompleta.setEstadoEmpresa(EstadoEmpresa.INTERESADA);
+                }
+                empresaService.actualizarEmpresa(empCompleta);
+            }
+
+            Notification.show("Empresa desadjudicada con éxito", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+            actualizarTabla();
+            limpiarFormulario();
+        } catch (Exception e) {
+            Notification.show("Error al desadjudicar: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
     }
-}
 //    private void accionDesasignar() {
 //        Lote lote = grid.asSingleSelect().getValue();
 //        if (lote == null) return;

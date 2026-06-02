@@ -1,5 +1,6 @@
 package com.unrn.gpiv.views.empresa;
 
+import com.unrn.gpiv.common.EstadoEmpresa;
 import com.unrn.gpiv.common.EstadoSolicitud;
 import com.unrn.gpiv.model.Empresa;
 import com.unrn.gpiv.model.Item;
@@ -117,8 +118,7 @@ public class SolicitarRecursoView extends VerticalLayout {
 
         empresaLogueada = empresaService.obtenerEmpresaPorRepresentante(logueado);
 
-        // Control de Criterio de Aceptación: Debe estar aprobada y con lotes asignados (Radicada)
-        if (empresaLogueada == null || empresaLogueada.getEstado() != EstadoSolicitud.APROBADA || empresaLogueada.getLotesAsignados().isEmpty()) {
+        if (empresaLogueada == null || (empresaLogueada.getEstadoEmpresa() != EstadoEmpresa.RADICADA && empresaLogueada.getEstadoEmpresa() != EstadoEmpresa.TITULADA)) {
 
             setSizeFull();
             setJustifyContentMode(JustifyContentMode.CENTER);
