@@ -114,6 +114,17 @@ public class EmpresaService {
         return empresaRepository.save(nuevaEmpresa);
     }
 
+    @Transactional
+    public void titularEmpresa(Long empresaId) {
+        Empresa empresa = empresaRepository.findById(empresaId)
+                .orElseThrow(() -> new RuntimeException("No se encontró la empresa con ID: " + empresaId));
+
+        empresa.setTitulada(true);
+        empresa.setEstadoEmpresa(EstadoEmpresa.TITULADA);
+
+        empresaRepository.save(empresa);
+    }
+
     //NUEVO MÉTODO DE AUTENTICACIÓN GENERAL
     public Usuario loginGeneral(String username, String password) {
         return usuarioRepository.findByUsername(username)

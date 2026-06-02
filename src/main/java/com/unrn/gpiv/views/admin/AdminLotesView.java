@@ -1,5 +1,6 @@
 package com.unrn.gpiv.views.admin;
 
+import com.unrn.gpiv.common.EstadoEmpresa;
 import com.unrn.gpiv.model.Empresa;
 import com.unrn.gpiv.model.Lote;
 import com.unrn.gpiv.common.EstadoLote;
@@ -28,6 +29,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 @PageTitle("Gestión de Lotes | SGPIV")
 @Route(value = "admin/lotes", layout = MainLayout.class)
@@ -154,7 +156,6 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
             desasignar.setVisible(false);
         }
     }
-
     private void accionGuardar() {
         try {
             Lote lote = grid.asSingleSelect().getValue();
@@ -162,11 +163,13 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
 
             if (binder.writeBeanIfValid(lote)) {
                 if (empresaAsignada.getValue() != null) {
-                    lote.setEmpresa(empresaAsignada.getValue());
+                    Empresa empresaAAsignar = empresaAsignada.getValue();
+                    lote.setEmpresa(empresaAAsignar);
+
                     if (lote.getEstado() == EstadoLote.LIBRE) {
                         lote.setEstado(EstadoLote.OCUPADO);
 
-                        //guarda en historial
+                        // Guarda en historial
                         historialService.registrarAsignacion(
                                 lote.getEmpresa().getRazonSocial(),
                                 lote.getEmpresa().getCuit(),
@@ -174,6 +177,15 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
                                 lote.getNroLote()
                         );
                     }
+
+                    // 🟢 TRANSICIÓN DE ESTADO DE LA EMPRESA:
+                    // Si la empresa estaba como INTERESADA, ahora que tiene lote pasa a RADICADA
+                    if (empresaAAsignar.getEstadoEmpresa() == com.unrn.gpiv.common.EstadoEmpresa.INTERESADA) {
+                        empresaAAsignar.setEstadoEmpresa(com.unrn.gpiv.common.EstadoEmpresa.RADICADA);
+                        // Usamos el método existente en tu service para persistir el cambio en Supabase
+                        empresaService.actualizarEmpresa(empresaAAsignar);
+                    }
+
                 } else {
                     lote.setEmpresa(null);
                     lote.setEstado(EstadoLote.LIBRE);
@@ -194,39 +206,122 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
+//    private void accionGuardar() {
+//        try {
+//            Lote lote = grid.asSingleSelect().getValue();
+//            if (lote == null) return;
+//
+//            if (binder.writeBeanIfValid(lote)) {
+//                if (empresaAsignada.getValue() != null) {
+//                    lote.setEmpresa(empresaAsignada.getValue());
+//                    if (lote.getEstado() == EstadoLote.LIBRE) {
+//                        lote.setEstado(EstadoLote.OCUPADO);
+//
+//                        //guarda en historial
+//                        historialService.registrarAsignacion(
+//                                lote.getEmpresa().getRazonSocial(),
+//                                lote.getEmpresa().getCuit(),
+//                                lote.getManzana(),
+//                                lote.getNroLote()
+//                        );
+//                    }
+//                } else {
+//                    lote.setEmpresa(null);
+//                    lote.setEstado(EstadoLote.LIBRE);
+//                }
+//
+//                loteService.guardar(lote);
+//                Notification.show("Cambios aplicados correctamente", 3000, Notification.Position.TOP_CENTER)
+//                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+//
+//                actualizarTabla();
+//                limpiarFormulario();
+//            } else {
+//                Notification.show("Por favor, revise los campos marcados en rojo", 3000, Notification.Position.TOP_CENTER)
+//                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+//            }
+//        } catch (Exception e) {
+//            Notification.show("Error al guardar: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER)
+//                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+//        }
+//    }
+private void accionDesasignar() {
+    Lote lote = grid.asSingleSelect().getValue();
+    if (lote == null) return;
 
-    private void accionDesasignar() {
-        Lote lote = grid.asSingleSelect().getValue();
-        if (lote == null) return;
-
-        // Doble seguridad por las dudas
-        if (lote.getEmpresa() == null) {
-            Notification.show("Este lote no tiene ninguna empresa asignada.");
-            return;
-        }
-
-        try {
-            //antes de desasignar guarda en historial
-            historialService.registrarDesasignacion(lote.getManzana(), lote.getNroLote());
-            // Hacemos la desasignación física en el objeto
-            lote.setEmpresa(null);
-            lote.setEstado(EstadoLote.LIBRE);
-            lote.setFechaAsignacion(null);
-            // Si tenés setFechaAsignacion(null), agregalo acá también
-
-            // Guardamos el cambio en la base de datos
-            loteService.guardar(lote);
-
-            Notification.show("Empresa desasignada con éxito", 3000, Notification.Position.TOP_CENTER)
-                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-
-            actualizarTabla();
-            limpiarFormulario();
-        } catch (Exception e) {
-            Notification.show("Error al desasignar: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER)
-                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
-        }
+    if (lote.getEmpresa() == null) {
+        Notification.show("Este lote no tiene ninguna empresa asignada.");
+        return;
     }
+
+    try {
+        Empresa empresaAfectada = lote.getEmpresa();
+
+        // Antes de desasignar guarda en historial
+        historialService.registrarDesasignacion(lote.getManzana(), lote.getNroLote());
+
+        // Hacemos la desasignación física
+        lote.setEmpresa(null);
+        lote.setEstado(EstadoLote.LIBRE);
+        lote.setFechaAsignacion(null);
+
+        // Guardamos el cambio en el lote primero
+        loteService.guardar(lote);
+
+        // 🟢 CONTROL DE RETROCESO DE ESTADO:
+        // Volvemos a consultar la empresa completa para verificar si le quedan otros lotes activos
+        Optional<Empresa> empCompletaOpt = empresaService.obtenerEmpresaCompletaPorId(empresaAfectada.getId());
+        if (empCompletaOpt.isPresent()) {
+            Empresa empCompleta = empCompletaOpt.get();
+            // Si ya no tiene más lotes y figuraba como RADICADA, vuelve a ser INTERESADA
+            if (empCompleta.getLotesAsignados().isEmpty() && empCompleta.getEstadoEmpresa() == EstadoEmpresa.RADICADA) {
+                empCompleta.setEstadoEmpresa(EstadoEmpresa.INTERESADA);
+                empresaService.actualizarEmpresa(empCompleta);
+            }
+        }
+
+        Notification.show("Empresa desasignada con éxito", 3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+        actualizarTabla();
+        limpiarFormulario();
+    } catch (Exception e) {
+        Notification.show("Error al desasignar: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+    }
+}
+//    private void accionDesasignar() {
+//        Lote lote = grid.asSingleSelect().getValue();
+//        if (lote == null) return;
+//
+//        // Doble seguridad por las dudas
+//        if (lote.getEmpresa() == null) {
+//            Notification.show("Este lote no tiene ninguna empresa asignada.");
+//            return;
+//        }
+//
+//        try {
+//            //antes de desasignar guarda en historial
+//            historialService.registrarDesasignacion(lote.getManzana(), lote.getNroLote());
+//            // Hacemos la desasignación física en el objeto
+//            lote.setEmpresa(null);
+//            lote.setEstado(EstadoLote.LIBRE);
+//            lote.setFechaAsignacion(null);
+//            // Si tenés setFechaAsignacion(null), agregalo acá también
+//
+//            // Guardamos el cambio en la base de datos
+//            loteService.guardar(lote);
+//
+//            Notification.show("Empresa desasignada con éxito", 3000, Notification.Position.TOP_CENTER)
+//                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+//
+//            actualizarTabla();
+//            limpiarFormulario();
+//        } catch (Exception e) {
+//            Notification.show("Error al desasignar: " + e.getMessage(), 5000, Notification.Position.TOP_CENTER)
+//                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+//        }
+//    }
 
     private void accionEliminar() {
         Lote lote = grid.asSingleSelect().getValue();
