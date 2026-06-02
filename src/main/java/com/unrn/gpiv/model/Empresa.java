@@ -96,6 +96,12 @@ public class Empresa {
 
     public Empresa() {}
 
+    // METODOS PROPIOS
+    public void agregarHerramientaPrestada(Recurso recurso) {
+        this.herramientasPrestadas.add(recurso);
+        recurso.setPrestadoA(this);
+    }
+
     // --- GETTERS Y SETTERS ---
 
     public Long getId() { return id; }

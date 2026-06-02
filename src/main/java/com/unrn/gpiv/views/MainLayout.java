@@ -79,6 +79,7 @@ public class MainLayout extends AppLayout {
             menu.add(crearLink(InformesEmpresasView.class, VaadinIcon.CHART_3D, " Informe de Empresas"));
             menu.add(crearLink(EvaluarSolicitudesView.class, VaadinIcon.CHECK_SQUARE_O, " Evaluar Solicitudes"));
             menu.add(crearLink(InventarioView.class, VaadinIcon.TOOLS, " Gestión de Inventario"));
+            menu.add(crearLink(SolicitudesRecursosView.class, VaadinIcon.CLIPBOARD_TEXT, " Solicitudes de Recursos"));
             menu.add(crearLink(HistorialDashboardView.class, VaadinIcon.TIME_BACKWARD, " Historiales y Auditoría"));
         }
 
@@ -113,6 +114,8 @@ public class MainLayout extends AppLayout {
 
                     // Nuestro botón unificado que lleva a las 3 pestañas
                     menu.add(crearLink(AvancesObraView.class, VaadinIcon.CHART_TIMELINE, " Mi Avance"));
+                    // ACCESO EXCLUSIVO A LAS EMPRESAS RADICADAS
+                    menu.add(crearLink(SolicitarRecursoView.class, VaadinIcon.CUBES, " Solicitar Recursos"));
                 }
             }
         }

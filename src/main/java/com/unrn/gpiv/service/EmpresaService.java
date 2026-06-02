@@ -83,6 +83,8 @@ public class EmpresaService {
         empresaRepository.save(empresa);
     }
 
+    // <<<<<<<<<<<<<<<<<<<< TENGO QUE SEGUIR MODIFICANDOLO, PEROO ANDA >>>>>>>>>>>>>>>>>>>>>>>>>
+    // MODIFIQUE ESTE METODO: NO actualizaba bien el estado de una empresa (la empresa se aprobaba y se le asignaba un lote, pero seguia en estado Pendiente en el sistema)
     @Transactional
     public Empresa aprobarRadicacion(Long solicitudId) {
         SolicitudRadicacion solicitud = solicitudRepository.findById(solicitudId)
@@ -92,18 +94,21 @@ public class EmpresaService {
         nuevaEmpresa.setRazonSocial(solicitud.getRazonSocialPretendida());
         nuevaEmpresa.setRepresentante(solicitud.getRepresentante());
         nuevaEmpresa.setProyecto(solicitud.getProyecto());
-        nuevaEmpresa.setTitulada(false); //falta la escritura
+        nuevaEmpresa.setTitulada(false);
+        nuevaEmpresa.setEstado(EstadoSolicitud.APROBADA);
 
-        // a revisar esta parte
         if (solicitud.getRepresentante() != null && solicitud.getRepresentante().getCuitPersonal() != null) {
             nuevaEmpresa.setCuit(solicitud.getRepresentante().getCuitPersonal());
         } else {
-            nuevaEmpresa.setCuit("A DEFINIR"); // Por si acaso no hay representante
+            nuevaEmpresa.setCuit("A DEFINIR");
         }
 
+        // Actualizamos la solicitud del Admin (Aprobada) pero sin pegarle la empresa
         solicitud.setEstado(EstadoSolicitud.APROBADA);
-        solicitud.setFechaResolucion(LocalDateTime.now()); // agregamos esto para saber la fecha exacta !!!!!
+        solicitud.setFechaResolucion(LocalDateTime.now());
+        solicitudRepository.save(solicitud);
 
+        // Guardamos la empresa sola
         return empresaRepository.save(nuevaEmpresa);
     }
 
@@ -113,31 +118,30 @@ public class EmpresaService {
                 .filter(u -> u.getPassword().equals(password))
                 .orElseThrow(() -> new RuntimeException("Credenciales inválidas"));
     }
-//new
-@Transactional(readOnly = true)
-public Empresa obtenerEmpresaPorRepresentante(RepresentanteEmpresa rep) {
-    Empresa empresa = empresaRepository.findByRepresentante(rep).orElse(null);
 
-    if (empresa != null) {
-        if (empresa.getProyecto() != null) {
-            org.hibernate.Hibernate.initialize(empresa.getProyecto());
-            if (empresa.getProyecto().getServiciosNecesarios() != null) {
-                org.hibernate.Hibernate.initialize(empresa.getProyecto().getServiciosNecesarios());
+    @Transactional(readOnly = true)
+    public Empresa obtenerEmpresaPorRepresentante(RepresentanteEmpresa rep) {
+        Empresa empresa = empresaRepository.findByRepresentante(rep).orElse(null);
+
+        if (empresa != null) {
+            if (empresa.getProyecto() != null) {
+                org.hibernate.Hibernate.initialize(empresa.getProyecto());
+                if (empresa.getProyecto().getServiciosNecesarios() != null) {
+                    org.hibernate.Hibernate.initialize(empresa.getProyecto().getServiciosNecesarios());
+                }
             }
-        }
 
-        // 🚀 ESTAS SON LAS 4 LÍNEAS QUE EVITAN TU ERROR ACTUAL:
-        org.hibernate.Hibernate.initialize(empresa.getEmpleados());
-        org.hibernate.Hibernate.initialize(empresa.getVehiculos());
-        org.hibernate.Hibernate.initialize(empresa.getConsumosMensuales());
-        org.hibernate.Hibernate.initialize(empresa.getInformesDeAvance());
+            org.hibernate.Hibernate.initialize(empresa.getLotesAsignados());
+
+            org.hibernate.Hibernate.initialize(empresa.getEmpleados());
+            org.hibernate.Hibernate.initialize(empresa.getVehiculos());
+            org.hibernate.Hibernate.initialize(empresa.getConsumosMensuales());
+            org.hibernate.Hibernate.initialize(empresa.getInformesDeAvance());
+        }
+        return empresa;
     }
 
-    return empresa;
-}
 
-
-    //Se hace el login de representante con email y pass! para luego entrar como usuario
     public RepresentanteEmpresa login(String email, String password) {
         // Buscamos por email (o username, según como lo guardes)
         return representanteRepository.findByEmail(email)
