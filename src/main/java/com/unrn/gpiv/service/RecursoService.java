@@ -13,7 +13,6 @@ public class RecursoService {
 
     private final RecursoRepository recursoRepository;
 
-    // Inyección limpia por constructor
     public RecursoService(RecursoRepository recursoRepository) {
         this.recursoRepository = recursoRepository;
     }
@@ -25,7 +24,6 @@ public class RecursoService {
     }
 
     public List<Recurso> obtenerRecursosDisponibles() {
-        // Usa el filtro seguro por tipo Enum
         return recursoRepository.findByEstadoMovimiento(EstadoMovimientoRecurso.DISPONIBLE);
     }
 
@@ -95,5 +93,9 @@ public class RecursoService {
             throw new RuntimeException("El recurso que intenta eliminar no existe");
         }
         recursoRepository.deleteById(id);
+    }
+
+    public List<Recurso> listarRecursosPrestadosA(Empresa empresa) {
+        return recursoRepository.findByPrestadoAAndEstadoMovimiento(empresa, EstadoMovimientoRecurso.PRESTADO);
     }
 }
