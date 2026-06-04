@@ -1,5 +1,7 @@
 package com.unrn.gpiv.views.empresa;
 
+import com.unrn.gpiv.common.EstadoEmpresa;
+import com.unrn.gpiv.common.EstadoSolicitud;
 import com.unrn.gpiv.model.Empresa;
 import com.unrn.gpiv.model.RepresentanteEmpresa;
 import com.unrn.gpiv.model.Usuario;
@@ -20,30 +22,6 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.unrn.gpiv.common.EstadoEmpresa;
-import com.unrn.gpiv.common.EstadoSolicitud;
-import com.unrn.gpiv.model.Empresa;
-import com.unrn.gpiv.model.RepresentanteEmpresa;
-import com.unrn.gpiv.model.Usuario;
-import com.unrn.gpiv.service.EmpresaService;
-import com.unrn.gpiv.views.MainLayout;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.VaadinSession;
-import com.vaadin.flow.theme.lumo.LumoUtility;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @PageTitle("Mi Empresa | SGPIV")
 @Route(value = "mi-empresa", layout = MainLayout.class)
@@ -58,17 +36,23 @@ public class MiEmpresaView extends VerticalLayout {
         setSpacing(true);
         getStyle().set("max-width", "900px").set("margin", "0 auto");
 
-        // 1. RECUPERAR USUARIO
+        //RECUPERAR USUARIO
         Usuario usuarioLogueado = (Usuario) VaadinSession.getCurrent().getAttribute("usuarioLogueado");
         if (!(usuarioLogueado instanceof RepresentanteEmpresa logueado)) {
             add(new H2("Acceso denegado."));
             return;
         }
 
-        // 2. RECUPERAR DATOS EMPRESA
+        //RECUPERAR DATOS EMPRESA
         Empresa empresaData = empresaService.obtenerEmpresaPorRepresentante(logueado);
-        boolean yaRegistrada = (empresaData != null && empresaData.getFechaRadicacion() != null);
 
+        //CONTROL ESTRICTO:
+        //Si la empresa ya tiene dirección, o ya tiene tipo de sociedad, o ya tiene lotes asignados, ya se da por registrada
+        boolean yaRegistrada = (empresaData != null && (
+                (empresaData.getDireccion() != null && !empresaData.getDireccion().trim().isEmpty()) ||
+                        (empresaData.getTipoSociedad() != null && !empresaData.getTipoSociedad().trim().isEmpty()) ||
+                        (empresaData.getLotesAsignados() != null && !empresaData.getLotesAsignados().isEmpty())
+        ));
         H2 titulo = new H2("Registro Final de la Empresa");
         add(titulo);
 
@@ -97,7 +81,7 @@ public class MiEmpresaView extends VerticalLayout {
         TextField txtTelEmergencia = new TextField("Teléfono Emergencia");
         TextField txtInscripcion = new TextField("N° Inscripción Registral");
 
-        // Logica de Registro/Lectura (Precarga si ya existe)
+        // Lógica de Registro/Lectura (Precarga si ya completó el flujo alguna vez)
         if (yaRegistrada) {
             txtDomicilio.setValue(empresaData.getDireccion() != null ? empresaData.getDireccion() : "");
             comboSociedad.setValue(empresaData.getTipoSociedad() != null ? empresaData.getTipoSociedad() : "");
@@ -113,44 +97,59 @@ public class MiEmpresaView extends VerticalLayout {
         formNuevosDatos.add(txtDomicilio, comboSociedad, txtTelEmergencia, txtInscripcion);
 
         // BOTONERA-----------------------------------------------
-        Button btnGuardar = new Button("Enviar Registro", VaadinIcon.PAPERPLANE.create());
+        Button btnGuardar = new Button("Enviar Registro Legal", VaadinIcon.PAPERPLANE.create());
         btnGuardar.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
 
         if (yaRegistrada) {
             btnGuardar.setVisible(false);
-            add(datosExistentesCard, new H3("📋 Datos Legales"), formNuevosDatos, new Span("Los datos ya han sido enviados."));
+            Span mensajeExito = new Span("Los datos legales y de constitución de su empresa ya han sido cargados con éxito.");
+            mensajeExito.getStyle().set("color", "#009A3B").set("font-weight", "bold");
+            add(datosExistentesCard, new H3("📋 Datos Legales"), formNuevosDatos, mensajeExito);
         } else {
-            btnGuardar.addClickListener(e -> {
-                if (txtDomicilio.isEmpty()) {
-                    Notification.show("El domicilio es obligatorio").addThemeVariants(NotificationVariant.LUMO_ERROR);
-                    return;
-                }
+            if (empresaData == null) {
+                //si no hay emppresa tira un eerror
+                VerticalLayout errorCard = new VerticalLayout();
+                errorCard.getStyle().set("background-color", "#FFF5F5").set("border", "1px solid #FEB2B2").set("border-radius", "8px").set("padding", "1em");
 
-                // EVITAMOS EL NULL POINTER EXCEPTION: Si es null, creamos el objeto, sino usamos el existente
-                Empresa empresaAGuardar = (empresaData != null) ? empresaData : new Empresa();
+                Span txtError = new Span("⚠️ No se encontró ninguna empresa pre-radicada vinculada a su cuenta de representante. ");
+                txtError.getStyle().set("color", "#C53030").set("font-weight", "500");
+                errorCard.add(txtError);
 
-                // Llenamos los datos del formulario
-                empresaAGuardar.setRazonSocial(logueado.getNombreCompleto());
-                empresaAGuardar.setCuit(logueado.getCuitPersonal() != null ? logueado.getCuitPersonal() : "A DEFINIR");
-                empresaAGuardar.setRepresentante(logueado);
+                // Agregamos los datos iniciales y el error debajo
+                add(datosExistentesCard, errorCard);
+            } else {
+                // Si la empresa existe y esta lista para completar datos:
+                btnGuardar.addClickListener(e -> {
+                    if (txtDomicilio.isEmpty()) {
+                        Notification.show("El domicilio legal es obligatorio para la radicación.").addThemeVariants(NotificationVariant.LUMO_ERROR);
+                        return;
+                    }
+                    if (comboSociedad.isEmpty()) {
+                        Notification.show("Seleccione el tipo de sociedad de su empresa.").addThemeVariants(NotificationVariant.LUMO_ERROR);
+                        return;
+                    }
 
-                empresaAGuardar.setDireccion(txtDomicilio.getValue());
-                empresaAGuardar.setTipoSociedad(comboSociedad.getValue());
-                empresaAGuardar.setTelefonoEmergencia(txtTelEmergencia.getValue());
-                empresaAGuardar.setInscripcionRegistral(txtInscripcion.getValue());
+                    try {
+                        empresaService.completarRegistroLegalEmpresa(
+                                empresaData.getId(),
+                                txtDomicilio.getValue(),
+                                comboSociedad.getValue(),
+                                txtTelEmergencia.getValue(),
+                                txtInscripcion.getValue()
+                        );
 
-                // 🚀 ESTADOS DE TU NUEVA LOGICA SINKRONIZADOS
-                empresaAGuardar.setEstado(EstadoSolicitud.APROBADA);
-                empresaAGuardar.setEstadoEmpresa(EstadoEmpresa.RADICADA);
-                empresaAGuardar.setFechaRadicacion(java.time.LocalDate.now());
+                        Notification.show("¡Registro final de empresa completado con éxito!", 4000, Notification.Position.TOP_CENTER)
+                                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
-                empresaService.actualizarEmpresa(empresaAGuardar);
+                        getUI().ifPresent(ui -> ui.navigate("mi-proyecto"));
 
-                Notification.show("Registro exitoso").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-                getUI().ifPresent(ui -> ui.navigate("mi-proyecto"));
-            });
-
-            add(datosExistentesCard, new H3("📋 Datos Legales"), formNuevosDatos, btnGuardar);
+                    } catch (Exception ex) {
+                        Notification.show("Error al guardar en la base de datos: " + ex.getMessage(), 6000, Notification.Position.MIDDLE)
+                                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                        ex.printStackTrace();
+                    }
+                });
+                add(datosExistentesCard, new H3("📋 Datos Legales"), formNuevosDatos, btnGuardar);
+            }
         }
-    }
-}
+    } }

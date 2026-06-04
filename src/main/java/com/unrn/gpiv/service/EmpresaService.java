@@ -23,27 +23,22 @@ public class EmpresaService {
     @Autowired
     private SolicitudRadicacionRepository solicitudRepository;
     @Autowired
-    RepresentanteEmpresaRepository representanteRepository;
+    private RepresentanteEmpresaRepository representanteRepository;
     @Autowired
     private ProyectoProductivoRepository proyectoRepository;
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-
     @Transactional
     public RepresentanteEmpresa registrarRepresentante(RepresentanteEmpresa rep) {
-        // 1. CHEQUEO DE EMAIL (El que evita el bug de correo YA usado Y GUARDADO)
-        // Usamos usuarioRepository porque el mail está en la clase madre 'Usuario'
         if (usuarioRepository.existsByEmail(rep.getEmail())) {
             throw new IllegalArgumentException("Este correo electrónico ya está registrado. Por favor, iniciá sesión.");
         }
 
-        // 2. CHEQUEO DE USERNAME (Por si el username no fuera el mail)
         if (usuarioRepository.existsByUsername(rep.getUsername())) {
             throw new IllegalArgumentException("El nombre de usuario ya está en uso.");
         }
 
-        // 3. CHEQUEOS DE IDENTIDAD (DNI y CUIT)
         if (representanteRepository.existsByDni(rep.getDni())) {
             throw new IllegalArgumentException("Ya existe un usuario registrado con este DNI.");
         }
@@ -55,29 +50,112 @@ public class EmpresaService {
         try {
             return representanteRepository.save(rep);
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
-            // La última red de seguridad por si falla lo anterior
             throw new IllegalArgumentException("Error de base de datos: Algunos de los datos ya existen.");
         }
     }
+
     @Transactional
     public void recibirSolicitud(ProyectoProductivo proyecto, RepresentanteEmpresa rep, String razonSocial) {
-
-        // 1. REGLA DE NEGOCIO: Validamos que haya mandado el PDF
         if (proyecto.getPdfProyecto() == null || proyecto.getPdfProyecto().length == 0) {
             throw new IllegalArgumentException("El archivo PDF del proyecto es obligatorio.");
         }
 
-        // 2. Guardamos el proyecto PRIMERO para que tenga un ID en la BD
         ProyectoProductivo proyectoGuardado = proyectoRepository.save(proyecto);
 
-        // 3. Creamos y guardamos la Solicitud
         SolicitudRadicacion solicitud = new SolicitudRadicacion();
-        solicitud.setProyecto(proyectoGuardado); // Usamos el proyecto guardado
+        solicitud.setProyecto(proyectoGuardado);
         solicitud.setRepresentante(rep);
         solicitud.setRazonSocialPretendida(razonSocial);
-        solicitud.setEstado(EstadoSolicitud.PENDIENTE); // Siempre es bueno inicializar el estado
+        solicitud.setEstado(EstadoSolicitud.PENDIENTE);
 
         solicitudRepository.save(solicitud);
+    }
+
+    //agregué este metodo para terminar de completar la empresa (no funcionaba bien antes)
+    @Transactional
+    public void completarRegistroLegalEmpresa(Long empresaId, String direccion, String tipoSociedad, String telEmergencia, String inscripcion) {
+        //Buscamos el registro directamente de la base de datos dentro de la transacción
+        Empresa empresa = empresaRepository.findById(empresaId)
+                .orElseThrow(() -> new RuntimeException("No se encontró la empresa para completar el registro legal."));
+
+        //Setea solo los campos nuevos del formulario legal
+        empresa.setDireccion(direccion);
+        empresa.setTipoSociedad(tipoSociedad);
+        empresa.setTelefonoEmergencia(telEmergencia);
+        empresa.setInscripcionRegistral(inscripcion);
+
+        // Forzamos que los estados estén firmes
+        empresa.setEstado(EstadoSolicitud.APROBADA);
+        empresa.setEstadoEmpresa(EstadoEmpresa.RADICADA);
+        if (empresa.getFechaRadicacion() == null) {
+            empresa.setFechaRadicacion(LocalDate.now());
+        }
+        empresaRepository.save(empresa);
+    }
+
+    //PRE-APROBAR FASE 1 (Pasa a PRE_APROBADO)
+    @Transactional
+    public void preAprobarFase1(Long solicitudId) {
+        SolicitudRadicacion solicitud = solicitudRepository.findById(solicitudId)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada con ID: " + solicitudId));
+
+        solicitud.setEstado(EstadoSolicitud.PRE_APROBADO);
+        solicitudRepository.save(solicitud);
+    }
+
+    @Transactional
+    public void enviarDocumentacionFase2(Long solicitudId,
+                                         byte[] doc1, String nombre1,
+                                         byte[] doc2, String nombre2,
+                                         byte[] doc3, String nombre3) {
+
+        SolicitudRadicacion solicitud = solicitudRepository.findById(solicitudId)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
+
+        ProyectoProductivo proyecto = solicitud.getProyecto();
+
+        proyecto.setAdjuntoFase2_1(doc1);
+        proyecto.setNombreAdjunto1(nombre1);
+
+        proyecto.setAdjuntoFase2_2(doc2);
+        proyecto.setNombreAdjunto2(nombre2);
+
+        proyecto.setAdjuntoFase2_3(doc3);
+        proyecto.setNombreAdjunto3(nombre3);
+
+        proyectoRepository.save(proyecto);
+
+        solicitud.setEstado(EstadoSolicitud.DOCUMENTACION_ENVIADA);
+        solicitudRepository.save(solicitud);
+    }
+
+    //APROBACIÓN RADICACIÓN FINAL (Fase 2 completa)
+    @Transactional
+    public Empresa aprobarRadicacionFinal(Long solicitudId) {
+        SolicitudRadicacion solicitud = solicitudRepository.findById(solicitudId)
+                .orElseThrow(() -> new RuntimeException("Solicitud no encontrada con ID: " + solicitudId));
+
+        // Instanciamos la empresa física que operará en el parque
+        Empresa nuevaEmpresa = new Empresa();
+        nuevaEmpresa.setRazonSocial(solicitud.getRazonSocialPretendida());
+        nuevaEmpresa.setRepresentante(solicitud.getRepresentante());
+        nuevaEmpresa.setProyecto(solicitud.getProyecto());
+        nuevaEmpresa.setTitulada(false);
+        nuevaEmpresa.setEstadoEmpresa(EstadoEmpresa.RADICADA);
+        nuevaEmpresa.setFechaRadicacion(LocalDate.now());
+
+        if (solicitud.getRepresentante() != null && solicitud.getRepresentante().getCuitPersonal() != null) {
+            nuevaEmpresa.setCuit(solicitud.getRepresentante().getCuitPersonal());
+        } else {
+            nuevaEmpresa.setCuit("A DEFINIR");
+        }
+
+        //Cerramos la solicitud formal del administrador
+        solicitud.setEstado(EstadoSolicitud.APROBADA);
+        solicitud.setFechaResolucion(LocalDateTime.now());
+        solicitudRepository.save(solicitud);
+
+        return empresaRepository.save(nuevaEmpresa);
     }
 
     @Transactional
@@ -85,8 +163,6 @@ public class EmpresaService {
         empresaRepository.save(empresa);
     }
 
-    // <<<<<<<<<<<<<<<<<<<< TENGO QUE SEGUIR MODIFICANDOLO, PEROO ANDA >>>>>>>>>>>>>>>>>>>>>>>>>
-    // MODIFIQUE ESTE METODO: NO actualizaba bien el estado de una empresa (la empresa se aprobaba y se le asignaba un lote, pero seguia en estado Pendiente en el sistema)
     @Transactional
     public Empresa aprobarRadicacion(Long solicitudId) {
         SolicitudRadicacion solicitud = solicitudRepository.findById(solicitudId)
@@ -107,12 +183,10 @@ public class EmpresaService {
             nuevaEmpresa.setCuit("A DEFINIR");
         }
 
-        // Actualizamos la solicitud del Admin (Aprobada) pero sin pegarle la empresa
         solicitud.setEstado(EstadoSolicitud.APROBADA);
         solicitud.setFechaResolucion(LocalDateTime.now());
         solicitudRepository.save(solicitud);
 
-        // Guardamos la empresa sola
         return empresaRepository.save(nuevaEmpresa);
     }
 
@@ -127,7 +201,6 @@ public class EmpresaService {
         empresaRepository.save(empresa);
     }
 
-    //NUEVO MÉTODO DE AUTENTICACIÓN GENERAL
     public Usuario loginGeneral(String username, String password) {
         return usuarioRepository.findByUsername(username)
                 .filter(u -> u.getPassword().equals(password))
@@ -136,18 +209,20 @@ public class EmpresaService {
 
     @Transactional(readOnly = true)
     public Empresa obtenerEmpresaPorRepresentante(RepresentanteEmpresa rep) {
+        if (rep == null || rep.getId() == null) return null;
+
+        // Buscamos la empresa vinculada al representante
         Empresa empresa = empresaRepository.findByRepresentante(rep).orElse(null);
 
         if (empresa != null) {
+            // Inicializamos las colecciones LAZY para evitar LazyInitializationException
             if (empresa.getProyecto() != null) {
                 org.hibernate.Hibernate.initialize(empresa.getProyecto());
                 if (empresa.getProyecto().getServiciosNecesarios() != null) {
                     org.hibernate.Hibernate.initialize(empresa.getProyecto().getServiciosNecesarios());
                 }
             }
-
             org.hibernate.Hibernate.initialize(empresa.getLotesAsignados());
-
             org.hibernate.Hibernate.initialize(empresa.getEmpleados());
             org.hibernate.Hibernate.initialize(empresa.getVehiculos());
             org.hibernate.Hibernate.initialize(empresa.getConsumosMensuales());
@@ -156,70 +231,53 @@ public class EmpresaService {
         return empresa;
     }
 
-
     public RepresentanteEmpresa login(String email, String password) {
-        // Buscamos por email (o username, según como lo guardes)
         return representanteRepository.findByEmail(email)
-                .filter(u -> u.getPassword().equals(password)) // Comparación simple
+                .filter(u -> u.getPassword().equals(password))
                 .orElseThrow(() -> new RuntimeException("Usuario o password inválidos"));
     }
 
-    // MÉTODO para ver solicitudes de radicacion!
     @Transactional(readOnly = true)
     public SolicitudRadicacion obtenerUltimaSolicitud(RepresentanteEmpresa rep) {
-        // Usamos el repository que ya tenés para buscar por el ID del representante
         List<SolicitudRadicacion> solicitudes = solicitudRepository.findByRepresentanteId(rep.getId());
 
         if (solicitudes.isEmpty()) {
             return null;
         }
 
-        // Devolvemos la última cargada (la más reciente)
         return solicitudes.get(solicitudes.size() - 1);
     }
 
-    // 1. Para rescatar los datos y mostrarlos en los TextFields al editar
     public SolicitudRadicacion obtenerSolicitudPorId(Long id) {
         return solicitudRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("No encontré la solicitud con ID: " + id));
     }
 
-    // 2. Para guardar los cambios cuando el usuario termina de editar
     @Transactional
     public void actualizarSolicitud(SolicitudRadicacion solicitud) {
-        // Como la solicitud ya tiene un ID, el .save() de Spring se da cuenta
-        // solo que tiene que hacer un UPDATE y no un INSERT nuevo.
         solicitudRepository.save(solicitud);
     }
 
-
-    //si toca el ojito odescarga chau posibilidad de modificar
     @Transactional
     public void marcarComoEnEvaluacion(Long solicitudId) {
         SolicitudRadicacion sol = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("No se encontró la solicitud"));
 
-        // Solo hacemos el cambio si está en PENDIENTE.
-        // Si ya está APROBADA o RECHAZADA, no queremos volver atrás.
         if (sol.getEstado() == EstadoSolicitud.PENDIENTE) {
             sol.setEstado(EstadoSolicitud.EN_EVALUACION);
             solicitudRepository.save(sol);
         }
     }
 
-
-    //contabilizar pendientes
     public long contarSolicitudesPendientes() {
         return solicitudRepository.countByEstado(EstadoSolicitud.PENDIENTE);
     }
 
     @Transactional(readOnly = true)
     public List<Empresa> listarTodasLasAprobadas() {
-        return empresaRepository.findAll(); // Trae el listado completo directo de la BD
+        return empresaRepository.findAll();
     }
 
-    //DEMO PARA VER SI PUEDO GESTIONAR EL BOTON DE MODIFICAR EL INVENTARIO
-    // Este método trae todas las empresas para el ComboBox del inventario
     @Transactional(readOnly = true)
     public List<Empresa> obtenerTodasLasEmpresas() {
         return empresaRepository.findAll();
@@ -230,7 +288,6 @@ public class EmpresaService {
         Optional<Empresa> empresaOpt = empresaRepository.findById(id);
 
         empresaOpt.ifPresent(empresa -> {
-            // Inicializamos las colecciones LAZY para usarlas en la vista de detalle
             if (empresa.getProyecto() != null) {
                 org.hibernate.Hibernate.initialize(empresa.getProyecto());
             }
@@ -239,7 +296,6 @@ public class EmpresaService {
             org.hibernate.Hibernate.initialize(empresa.getHerramientasAportadas());
             org.hibernate.Hibernate.initialize(empresa.getHerramientasPrestadas());
 
-            // Inicializamos los ítems dentro de cada recurso para conocer su nombre/categoría
             empresa.getHerramientasAportadas().forEach(r -> {
                 if (r.getItem() != null) org.hibernate.Hibernate.initialize(r.getItem());
             });
