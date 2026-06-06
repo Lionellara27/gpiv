@@ -13,20 +13,17 @@ public class Recurso {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Relación con el "molde" del catálogo (Ej: Hacha, Motosierra)
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "item_id")
-    private Item item; // 🎯 Desde acá adentro leés item.getCategoria() de forma dinámica
+    private Item item;
 
     private String propietario;
     private String numeroSerie;
     private String ubicacionFisica;
 
-    // 🎯 CAMBIO: Mapeo seguro con Enum para el estado físico (NUEVO, GASTADO, ROTO)
     @Enumerated(EnumType.STRING)
     private EstadoConservacionRecurso estadoConservacion;
 
-    // 🎯 CAMBIO: Mapeo seguro con Enum para los movimientos ("DISPONIBLE", "PRESTADO", etc.)
     @Enumerated(EnumType.STRING)
     private EstadoMovimientoRecurso estadoMovimiento = EstadoMovimientoRecurso.DISPONIBLE;
 
@@ -42,7 +39,6 @@ public class Recurso {
     @JoinColumn(name = "empresa_propietaria_id")
     private Empresa propietarioEmpresa;
 
-    // Constructor vacío obligatorio para JPA
     public Recurso() {
     }
 

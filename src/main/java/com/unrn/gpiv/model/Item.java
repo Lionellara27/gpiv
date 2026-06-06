@@ -25,6 +25,7 @@ public class Item {
 
     // Constructor vacío obligatorio para JPA
     public Item() {
+        this.existencias = new java.util.ArrayList<>();
     }
 
     // --- GETTERS Y SETTERS ---

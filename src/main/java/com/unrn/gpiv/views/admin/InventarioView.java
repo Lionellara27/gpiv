@@ -20,7 +20,6 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -81,64 +80,48 @@ public class InventarioView extends VerticalLayout {
         grid = new Grid<>(Recurso.class, false);
         grid.setSizeFull();
 
-        // 1. FECHA
         grid.addColumn(r -> r.getFechaRegistro() != null ? r.getFechaRegistro().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-")
-                .setHeader("Fecha").setSortable(true).setWidth("120px").setFlexGrow(0);
+                .setHeader("Fecha").setSortable(true).setWidth("110px").setFlexGrow(0);
 
-        // 2. NOMBRE
         grid.addColumn(r -> r.getItem() != null ? r.getItem().getNombre() : "S/N")
-                .setHeader("Nombre").setSortable(true);
+                .setHeader("Nombre").setSortable(true).setFlexGrow(1);
 
-        // 3. CATEGORÍA
         grid.addColumn(r -> r.getItem() != null ? r.getItem().getCategoria() : "Sin Cat")
-                .setHeader("Categoría").setSortable(true);
+                .setHeader("Categoría").setSortable(true).setWidth("150px").setFlexGrow(1);
 
-        // 4. ESTADO FÍSICO (Badge)
-        grid.addComponentColumn(this::createEstadoBadge).setHeader("Estado Físico").setWidth("150px").setFlexGrow(0);
+        grid.addComponentColumn(this::createEstadoBadge).setHeader("Estado Físico").setWidth("130px").setFlexGrow(0);
 
-        // 5. ESTADO MOVIMIENTO (Nuevo: Disponible/Prestado)
-        // Acá podés poner un texto simple o un badge de color también si querés
-        grid.addColumn(Recurso::getEstadoMovimiento).setHeader("Estado").setSortable(true);
+        grid.addColumn(Recurso::getEstadoMovimiento).setHeader("Estado").setSortable(true).setWidth("120px").setFlexGrow(0);
 
-        // 6. POSEEDOR (El nuevo campo clave)
-        // Si prestadoA es null, significa que está en el parque/disponible
-        grid.addColumn(r -> r.getPrestadoA() != null ? r.getPrestadoA().getRazonSocial() : "El Parque")
-                .setHeader("Poseedor").setSortable(true);
+        grid.addColumn(r -> {
+            if (r.getPropietarioEmpresa() != null &&
+                    (r.getEstadoMovimiento() == EstadoMovimientoRecurso.DISPONIBLE ||
+                            r.getEstadoMovimiento() == EstadoMovimientoRecurso.PAUSADO)) {
 
-        // 7. UBICACIÓN
-        grid.addColumn(Recurso::getUbicacionFisica).setHeader("Ubicación").setSortable(true);
+                Empresa duenia = r.getPropietarioEmpresa();
+                String datosRepresentante = "";
+                if (duenia.getRepresentante() != null) {
+                    datosRepresentante = " - Resp: " + duenia.getRepresentante().getNombreCompleto();
+                }
+                return duenia.getRazonSocial() + datosRepresentante;
+            }
 
-        // 8. ACCIONES (Lápiz y Tacho)
-        grid.addComponentColumn(this::createActionButtons).setHeader("Acciones").setWidth("120px").setFlexGrow(0);
+            if (r.getPrestadoA() != null) {
+                String datosRepPrestado = "";
+                if (r.getPrestadoA().getRepresentante() != null) {
+                    datosRepPrestado = " - Resp: " + r.getPrestadoA().getRepresentante().getNombreCompleto();
+                }
+                return r.getPrestadoA().getRazonSocial() + datosRepPrestado + " [En Uso]";
+            }
+
+            return "El Parque";
+        }).setHeader("Poseedor / Contacto").setSortable(true).setFlexGrow(2);
+
+        grid.addColumn(Recurso::getUbicacionFisica).setHeader("Ubicación").setSortable(true).setWidth("140px").setFlexGrow(1);
+
+        grid.addComponentColumn(this::createActionButtons).setHeader("Acciones").setWidth("140px").setFlexGrow(0);
     }
 
-    /* columna que se que SI ANDA
-    private void configureGrid() {
-        grid = new Grid<>(Recurso.class, false);
-        grid.setSizeFull();
-
-        // 🎯 1. LA COLUMNA FECHA (Exactamente donde la pediste)
-        grid.addColumn(r -> r.getFechaRegistro() != null ? r.getFechaRegistro().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "-")
-                .setHeader("Fecha").setSortable(true).setWidth("120px").setFlexGrow(0);
-
-        // 2. Nombre
-        grid.addColumn(r -> r.getItem() != null ? r.getItem().getNombre() : "S/N")
-                .setHeader("Nombre").setSortable(true);
-
-        // 3. Categoría
-        grid.addColumn(r -> r.getItem() != null ? r.getItem().getCategoria() : "Sin Cat")
-                .setHeader("Categoría").setSortable(true);
-
-        // 4. Estado Físico
-        grid.addComponentColumn(this::createEstadoBadge).setHeader("Estado").setWidth("150px").setFlexGrow(0);
-
-        // 5. Ubicación
-        grid.addColumn(Recurso::getUbicacionFisica).setHeader("Ubicación").setSortable(true);
-
-        // 6. Acciones
-        grid.addComponentColumn(this::createActionButtons).setHeader("Acciones").setWidth("120px").setFlexGrow(0);
-    }
-*/
     private Span createEstadoBadge(Recurso r) {
         String estado = r.getEstadoMovimiento().name();
         Span badge = new Span(estado);
@@ -191,7 +174,6 @@ public class InventarioView extends VerticalLayout {
         return new HorizontalLayout(btnDelete, btnEdit);
     }
 
-    // --- MODAL PRINCIPAL: ALTA DE RECURSO FÍSICO ---
     private void abrirFormularioNuevo() {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle("Registrar Nueva Existencia");
@@ -223,7 +205,6 @@ public class InventarioView extends VerticalLayout {
         form.add(comboLayout, txtSerie, txtUbicacion, conservacionCombo);
 
         Button saveButton = new Button("Guardar Registro", e -> {
-            // 🎯 AGREGAMOS TRY-CATCH: Si falla, ahora te avisa con un cartel rojo por qué falló
             try {
                 if (itemCombo.isEmpty()) {
                     Notification.show("Debe seleccionar un Ítem del catálogo.").addThemeVariants(NotificationVariant.LUMO_ERROR);
@@ -355,8 +336,8 @@ public class InventarioView extends VerticalLayout {
                 // Si no requiere poseedor, guardamos null
                 r.setPrestadoA(empresaCombo.isVisible() ? empresaCombo.getValue() : null);
 
-                recursoService.guardarRecurso(r); // Actualizamos en BD
-                grid.getDataProvider().refreshItem(r); // Refrescamos solo la fila, ¡mágico!
+                recursoService.guardarRecurso(r);
+                grid.getDataProvider().refreshItem(r); 
 
                 dialog.close();
                 Notification.show("Recurso actualizado con éxito").addThemeVariants(NotificationVariant.LUMO_SUCCESS);

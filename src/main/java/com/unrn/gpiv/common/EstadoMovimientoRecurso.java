@@ -4,5 +4,6 @@ public enum EstadoMovimientoRecurso {
     DISPONIBLE,
     PRESTADO,
     A_DEVOLVER,
+    PAUSADO,
     EXTRAVIADO
 }
