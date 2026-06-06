@@ -227,6 +227,9 @@ public class EmpresaService {
             org.hibernate.Hibernate.initialize(empresa.getVehiculos());
             org.hibernate.Hibernate.initialize(empresa.getConsumosMensuales());
             org.hibernate.Hibernate.initialize(empresa.getInformesDeAvance());
+
+            //nuevo para ver lo prestado
+            org.hibernate.Hibernate.initialize(empresa.getRecursosAsignados());
         }
         return empresa;
     }

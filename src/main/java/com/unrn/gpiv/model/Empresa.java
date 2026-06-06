@@ -97,6 +97,11 @@ public class Empresa {
     @OneToMany(mappedBy = "propietarioEmpresa")
     private List<Recurso> herramientasAportadas = new ArrayList<>();
 
+    // agrego este metodo para la parte de ver recursos desdes vista admin
+    public List<Recurso> getRecursosAsignados() {
+        return this.herramientasPrestadas;
+    }
+
     // --- CONSTRUCTORES ---
 
     public Empresa() {}
