@@ -1,6 +1,8 @@
 package com.unrn.gpiv.service;
 
 import com.unrn.gpiv.common.EstadoEmpresa;
+import com.unrn.gpiv.common.EstadoLote;
+import com.unrn.gpiv.common.EstadoMovimientoRecurso;
 import com.unrn.gpiv.common.EstadoSolicitud;
 import com.unrn.gpiv.messaging.service.EmailService;
 import com.unrn.gpiv.model.*;
@@ -28,6 +30,9 @@ public class EmpresaService {
     private ProyectoProductivoRepository proyectoRepository;
     @Autowired
     private UsuarioRepository usuarioRepository;
+//parte para contadores
+
+    // Tu EmpresaService debería quedar solo con esto:
 
     @Transactional
     public RepresentanteEmpresa registrarRepresentante(RepresentanteEmpresa rep) {
@@ -272,9 +277,16 @@ public class EmpresaService {
         }
     }
 
+    //parte de conteo de solicitud, lotes, inventario, etc
     public long contarSolicitudesPendientes() {
         return solicitudRepository.countByEstado(EstadoSolicitud.PENDIENTE);
     }
+
+    public long contarEmpresasRadicadas() {
+        return empresaRepository.countByEstadoEmpresa(EstadoEmpresa.RADICADA);
+    }
+
+    //________________
 
     @Transactional(readOnly = true)
     public List<Empresa> listarTodasLasAprobadas() {

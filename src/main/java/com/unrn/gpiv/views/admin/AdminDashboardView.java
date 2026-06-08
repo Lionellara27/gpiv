@@ -1,5 +1,7 @@
 package com.unrn.gpiv.views.admin;
 
+import com.unrn.gpiv.service.LoteService;
+import com.unrn.gpiv.service.RecursoService;
 import com.unrn.gpiv.views.MainLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
@@ -19,8 +21,14 @@ import org.springframework.beans.factory.annotation.Autowired; // <--- 2. Para l
 public class AdminDashboardView extends VerticalLayout {
     private final EmpresaService empresaService; // <--- 3. Variable para el Service
 
-    public AdminDashboardView(@Autowired EmpresaService empresaService) {
+    private final LoteService loteService;
+    private final RecursoService recursoService;
+
+
+    public AdminDashboardView(@Autowired EmpresaService empresaService, LoteService loteService, RecursoService recursoService) {
         this.empresaService = empresaService;
+        this.loteService = loteService;
+        this.recursoService = recursoService;
         setPadding(true);
         setSpacing(true);
         setSizeFull();
@@ -41,11 +49,25 @@ public class AdminDashboardView extends VerticalLayout {
         cardSolicitudes.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("admin/evaluar")));
 
 // 2. Agregamos UNA SOLA VEZ cada tarjeta al layout
-        kpiLayout.add(
+        /* viejo que anda pero no es interactivo kpiLayout.add(
                 cardSolicitudes, // La azul primero (o donde más te guste)
                 crearTarjetaKPI("LOTES", "12 LIBRES", VaadinIcon.MAP_MARKER, "#009A3B"),
                 crearTarjetaKPI("EMPRESAS", "45 RADICADAS", VaadinIcon.FACTORY, "#666"),
                 crearTarjetaKPI("PRÉSTAMOS", "2 ACTIVOS", VaadinIcon.TOOLS, "#E67E22")
+        );*/
+
+        // 1. Pedimos los números reales a los servicios
+        long cantLotes = loteService.contarLotesLibres();
+        long cantEmpresas = empresaService.contarEmpresasRadicadas();
+        long cantPrestamos = recursoService.obtenerCantidadPrestados();
+        long cantSolicitudes = empresaService.contarSolicitudesPendientes();
+
+// 2. Construimos las tarjetas con esos valores (Concatenamos el número con el texto)
+        kpiLayout.add(
+                crearTarjetaKPI("SOLICITUDES", cantSolicitudes + " PENDIENTES", VaadinIcon.ENVELOPE, "#0072BB"),
+                crearTarjetaKPI("LOTES", cantLotes + " LIBRES", VaadinIcon.MAP_MARKER, "#009A3B"),
+                crearTarjetaKPI("EMPRESAS", cantEmpresas + " RADICADAS", VaadinIcon.FACTORY, "#666"),
+                crearTarjetaKPI("PRÉSTAMOS", cantPrestamos + " ACTIVOS", VaadinIcon.TOOLS, "#E67E22")
         );
 
         // --- CONTENEDOR DE TABLAS (MITAD Y MITAD) ---

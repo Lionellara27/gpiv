@@ -4,6 +4,7 @@ import com.unrn.gpiv.common.EstadoMovimientoRecurso; // 🟢 Tus enums fuertes
 import com.unrn.gpiv.model.Recurso;
 import com.unrn.gpiv.repository.RecursoRepository;
 import com.unrn.gpiv.model.Empresa;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -98,4 +99,5 @@ public class RecursoService {
     public List<Recurso> listarRecursosPrestadosA(Empresa empresa) {
         return recursoRepository.findByPrestadoAAndEstadoMovimiento(empresa, EstadoMovimientoRecurso.PRESTADO);
     }
+
 }

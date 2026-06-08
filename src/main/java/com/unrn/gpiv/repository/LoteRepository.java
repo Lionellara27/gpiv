@@ -12,4 +12,8 @@ public interface LoteRepository extends JpaRepository<Lote, Long> {
     //permite buscar, guardar o borrar datos sin escribir SQL manualmente.
 
     List<Lote> findByEstado(EstadoLote estado);
+
+    //tmb para contar
+    long countByEstado(EstadoLote estado);
+
 }

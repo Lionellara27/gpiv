@@ -1,5 +1,6 @@
 package com.unrn.gpiv.repository;
 
+import com.unrn.gpiv.common.EstadoEmpresa;
 import com.unrn.gpiv.model.Empresa;
 import com.unrn.gpiv.model.RepresentanteEmpresa;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,5 +20,7 @@ public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
 
     // Para validar si una Razon Social ya existe y evitar duplicados
     boolean existsByRazonSocial(String razonSocial);
+//para contar
+    long countByEstadoEmpresa(EstadoEmpresa estado);
 
 }
