@@ -99,6 +99,11 @@ public class AvancesObraView extends VerticalLayout {
 
         // PESTAÑA 3: HISTORIAL DE AVANCES
         tabHistorial.getStyle().set("background-color", estiloTarjeta).set("padding", "2em").set("border-radius", "10px");
-        tabHistorial.add(new H2("Acá irá la línea de tiempo y carga de PDF...")); // Este lo dejamos porque todavía no lo armamos
+        if (empresaActual != null) {
+            HistorialAvancesView panelAvances = new HistorialAvancesView(empresaActual, empresaService);
+            tabHistorial.add(panelAvances);
+        } else {
+            tabHistorial.add(new H2("No tenés una empresa vinculada."));
+        }
     }
 }

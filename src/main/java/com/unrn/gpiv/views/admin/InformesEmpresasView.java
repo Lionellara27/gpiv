@@ -192,14 +192,22 @@ public class InformesEmpresasView extends VerticalLayout {
         cardPersonal.getStyle().set("background-color", "white").set("border-radius", "15px").set("padding", "1em");
         gridPersonal.addColumn(Empleado::getNombre).setHeader("Nombre");
         gridPersonal.addColumn(Empleado::getCargo).setHeader("Cargo");
-        cardPersonal.add(new H4("Nómina de Personal"), gridPersonal);
+        gridPersonal.addComponentColumn(e -> {
+            Span badge = new Span("Activo");
+            badge.getStyle().set("font-size", "0.75em").set("padding", "2px 8px").set("border-radius", "10px").set("background-color", "#d4edda");
+            return badge;
+        }).setHeader("Estado");
+        gridPersonal.appendFooterRow(); // Preparamos la fila de totales
+        cardPersonal.add(tPersonal, gridPersonal);
 
         // Subtarjeta: Vehículos
         VerticalLayout cardVehiculos = new VerticalLayout();
         cardVehiculos.getStyle().set("background-color", "white").set("border-radius", "15px").set("padding", "1em");
         gridVehiculos.addColumn(Vehiculo::getPatente).setHeader("Patente");
         gridVehiculos.addColumn(Vehiculo::getTipo).setHeader("Tipo");
-        cardVehiculos.add(new H4("Flota Homologada"), gridVehiculos);
+        gridVehiculos.addColumn(v -> "Al día").setHeader("Seguro/VTV");
+        gridVehiculos.appendFooterRow(); // Preparamos la fila de totales
+        cardVehiculos.add(tVehiculos, gridVehiculos);
 
         // Subtarjeta: Inventario de Recursos
         VerticalLayout cardInventario = new VerticalLayout();
@@ -254,13 +262,23 @@ public class InformesEmpresasView extends VerticalLayout {
         gridLotes.setItems(empresaSeleccionadaReal.getLotesAsignados());
 
         // --- AQUÍ ESTÁ LA MAGIA DE LOS TAMAÑOS ---
+        // Personal y Totales
         gridPersonal.setItems(empresaSeleccionadaReal.getEmpleados());
         tPersonal.setText("Nómina de Personal (Total: " + empresaSeleccionadaReal.getEmpleados().size() + ")");
+        FooterRow fPersonal = gridPersonal.getFooterRows().get(0);
+        fPersonal.getCell(gridPersonal.getColumns().get(0)).setText("TOTAL EMPLEADOS:");
+        fPersonal.getCell(gridPersonal.getColumns().get(1)).setText(String.valueOf(empresaSeleccionadaReal.getEmpleados().size()));
 
+        // Vehículos y Totales
         gridVehiculos.setItems(empresaSeleccionadaReal.getVehiculos());
         tVehiculos.setText("Flota Homologada (Total: " + empresaSeleccionadaReal.getVehiculos().size() + ")");
+        FooterRow fVehiculos = gridVehiculos.getFooterRows().get(0);
+        fVehiculos.getCell(gridVehiculos.getColumns().get(0)).setText("TOTAL UNIDADES:");
+        fVehiculos.getCell(gridVehiculos.getColumns().get(1)).setText(String.valueOf(empresaSeleccionadaReal.getVehiculos().size()));
 
+        // Inventario y Totales
         gridInventario.setItems(empresaSeleccionadaReal.getRecursosAsignados());
+        // Como la grilla de inventario aún no tiene un appendFooterRow() en configurarVistaDetalle, por ahora solo le pasamos los ítems.
 
         // 3. Recalcular Totales y Badges
         actualizarSeccionConsumosPorAnio();
@@ -305,6 +323,12 @@ public class InformesEmpresasView extends VerticalLayout {
 
         // Escribimos los resultados abajo de la tabla
         // Obtenemos las celdas del footer directamente de la fila que creamos
+       /* gridConsumos.getColumns().get(0).setFooter("TOTAL ANUAL:");
+        gridConsumos.getColumns().get(1).setFooter(totalLuz > 0 ? totalLuz + " kWh" : "-");
+        gridConsumos.getColumns().get(2).setFooter(totalAgua > 0 ? totalAgua + " Lts" : "-");
+        gridConsumos.getColumns().get(3).setFooter(totalGas > 0 ? totalGas + " m³" : "-");*/
+
+//nuevo metodo para reflejar el total de cada cosa
         gridConsumos.getColumns().get(0).setFooter("TOTAL ANUAL:");
         gridConsumos.getColumns().get(1).setFooter(totalLuz > 0 ? totalLuz + " kWh" : "-");
         gridConsumos.getColumns().get(2).setFooter(totalAgua > 0 ? totalAgua + " Lts" : "-");
