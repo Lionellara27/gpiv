@@ -36,7 +36,7 @@ public class RecursoService {
     // --- 📊 MÉTODOS PARA EL DASHBOARD (Números 100% Reales) ---
 
     public long obtenerCantidadPrestados() {
-        return recursoRepository.countByEstadoMovimiento(EstadoMovimientoRecurso.PRESTADO);
+        return recursoRepository.countByEstadoMovimiento(EstadoMovimientoRecurso.PRESTADO) + recursoRepository.countByEstadoMovimiento(EstadoMovimientoRecurso.A_DEVOLVER);
     }
 
     public long obtenerCantidadADevolver() {

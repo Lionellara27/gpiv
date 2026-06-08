@@ -283,7 +283,7 @@ public class EmpresaService {
     }
 
     public long contarEmpresasRadicadas() {
-        return empresaRepository.countByEstadoEmpresa(EstadoEmpresa.RADICADA);
+        return empresaRepository.countByEstadoEmpresa(EstadoEmpresa.RADICADA)+ + empresaRepository.countByEstadoEmpresa(EstadoEmpresa.TITULADA);
     }
 
     //________________

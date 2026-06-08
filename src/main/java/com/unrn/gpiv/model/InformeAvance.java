@@ -34,6 +34,12 @@ public class InformeAvance {
     @JoinColumn(name = "empresa_id")
     private Empresa empresa;
 
+
+    //para guardar los consumos y mostrarlos en el front
+    private double energia;
+    private double agua;
+    private double gas;
+
     // Constructor vacío (obligatorio)
     public InformeAvance() {}
 
@@ -78,4 +84,14 @@ public class InformeAvance {
 
     public String getNombreArchivoPdf() { return nombreArchivoPdf; }
     public void setNombreArchivoPdf(String nombreArchivoPdf) { this.nombreArchivoPdf = nombreArchivoPdf; }
+
+    //sett y gett para ver los datos en frotn
+    public double getEnergia() { return energia; }
+    public void setEnergia(double energia) { this.energia = energia; }
+
+    public double getAgua() { return agua; }
+    public void setAgua(double agua) { this.agua = agua; }
+
+    public double getGas() { return gas; }
+    public void setGas(double gas) { this.gas = gas; }
 }
