@@ -40,6 +40,7 @@ public class EmpresaDetalleView extends VerticalLayout implements HasUrlParamete
 	private Paragraph descElement = new Paragraph();
 	private Span badgeCondicion = new Span();
 	private Button btnTitular = new Button("Titular Empresa", VaadinIcon.DIPLOMA.create());
+	private Button btnDesadjudicar = new Button("Desadjudicar Empresa", VaadinIcon.TRASH.create());
 
 	// Grids de Datos Reales
 	private Grid<Lote> gridLotes = new Grid<>(Lote.class, false);
@@ -86,9 +87,14 @@ public class EmpresaDetalleView extends VerticalLayout implements HasUrlParamete
 		// Configuración del botón de Escrituración / Titularidad
 		btnTitular.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
 		btnTitular.getStyle().set("margin-left", "auto"); // Lo empuja hacia el extremo derecho
-		btnTitular.addClickListener(e -> abrirDialogoConfirmacion());
+		btnTitular.addClickListener(e -> abrirDialogoTitulacion());
 
 		header.add(logoEmpresa, infoGral, btnTitular);
+		// Configuración del botón de Desadjudicación
+		btnDesadjudicar.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+		btnDesadjudicar.getStyle().set("margin-left", "10px");
+		btnDesadjudicar.addClickListener(e -> abrirDialogoDesadjudicacion());
+		header.add(btnDesadjudicar);
 
 		// --- 2. CUERPO: LOTES (IZQ) Y HERRAMIENTAS (DER) ---
 		HorizontalLayout cuerpo = new HorizontalLayout();
@@ -190,11 +196,16 @@ public class EmpresaDetalleView extends VerticalLayout implements HasUrlParamete
 			actualizarEstiloBadge(est);
 
 			// Control de visibilidad del botón "Titular Empresa"
-			// Solo se puede titular si ya está Radicada. Si ya es TITULADA o sigue INTERESADA, no tiene sentido.
+			// Solo se puede titular si ya está Radicada
 			if (est == EstadoEmpresa.RADICADA) {
 				btnTitular.setVisible(true);
+				btnDesadjudicar.setVisible(true); // También permite desadjudicar si está RADICADA
+			} else if (est == EstadoEmpresa.TITULADA) {
+				btnTitular.setVisible(false);
+				btnDesadjudicar.setVisible(true);
 			} else {
 				btnTitular.setVisible(false);
+				btnDesadjudicar.setVisible(false);
 			}
 
 			// 2. Cargar tabla de Lotes
@@ -228,37 +239,205 @@ public class EmpresaDetalleView extends VerticalLayout implements HasUrlParamete
 		}
 	}
 
-	private void abrirDialogoConfirmacion() {
+	private void abrirDialogoDesadjudicacion() {
 		Dialog dialog = new Dialog();
-		dialog.setHeaderTitle("Confirmar Titularidad (HU 11)");
+		dialog.setHeaderTitle("Desadjudicar Empresa");
+		dialog.setCloseOnOutsideClick(false);
+		dialog.setCloseOnEsc(false);
+		dialog.setWidth("600px");
 
-		VerticalLayout dialogLayout = new VerticalLayout(
-				new Paragraph("¿Está seguro de que desea otorgar el título de propiedad definitivo a esta empresa?"),
-				new Paragraph("Esta acción actualizará su estado a TITULADA y dejará constancia del otorgamiento de la escritura.")
-		);
-		dialogLayout.setPadding(false);
-		dialog.add(dialogLayout);
+		VerticalLayout layoutModal = new VerticalLayout();
+		layoutModal.setPadding(true);
+		layoutModal.setSpacing(true);
 
-		Button btnConfirmar = new Button("Otorgar Título", e -> {
+		Optional<Empresa> empresaOpt = empresaService.obtenerEmpresaCompletaPorId(currentEmpresaId);
+		String nombreEmpresa = empresaOpt.isPresent() ? empresaOpt.get().getRazonSocial() : "la empresa";
+
+		Paragraph advertencia = new Paragraph("⚠️ ADVERTENCIA: Esta acción es irreversible. " +
+				"Se liberarán todos los lotes asignados a '" + nombreEmpresa +
+				"' y su estado pasará a DESADJUDICADA.");
+		advertencia.getStyle().set("color", "#d32f2f").set("font-weight", "bold").set("font-size", "0.95em");
+
+		Paragraph instruccion = new Paragraph("Para completar el proceso, cargue el acta oficial de desadjudicación.");
+		instruccion.getStyle().set("color", "#4A5568").set("font-size", "0.95em");
+
+		// Variables para almacenar el PDF
+		final byte[][] pdfEnMemoria = {null};
+		final String[] nombrePdf = {null};
+
+		// Componente de carga
+		com.vaadin.flow.component.upload.Upload upload = new com.vaadin.flow.component.upload.Upload();
+		upload.setAcceptedFileTypes("application/pdf");
+		upload.setMaxFiles(1);
+
+		com.vaadin.flow.component.upload.receivers.MemoryBuffer buffer =
+				new com.vaadin.flow.component.upload.receivers.MemoryBuffer();
+		upload.setReceiver(buffer);
+
+		Button btnConfirmarDesadjudicacion = new Button("Confirmar Desadjudicación", VaadinIcon.TRASH.create());
+		btnConfirmarDesadjudicacion.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
+		btnConfirmarDesadjudicacion.setEnabled(false);
+
+		upload.addSucceededListener(event -> {
 			try {
-				empresaService.titularEmpresa(currentEmpresaId);
-				Notification.show("¡Empresa titulada con éxito!", 3000, Notification.Position.BOTTOM_END)
+				pdfEnMemoria[0] = buffer.getInputStream().readAllBytes();
+				nombrePdf[0] = event.getFileName();
+				btnConfirmarDesadjudicacion.setEnabled(true);
+				Notification.show("Acta procesada correctamente.", 2000, Notification.Position.BOTTOM_START)
 						.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+			} catch (Exception ex) {
+				Notification.show("Error al leer el archivo: " + ex.getMessage())
+						.addThemeVariants(NotificationVariant.LUMO_ERROR);
+			}
+		});
+
+		upload.addFileRejectedListener(e -> {
+			pdfEnMemoria[0] = null;
+			nombrePdf[0] = null;
+			btnConfirmarDesadjudicacion.setEnabled(false);
+		});
+
+		btnConfirmarDesadjudicacion.addClickListener(e -> {
+			try {
+				empresaService.desadjudicarEmpresa(currentEmpresaId, pdfEnMemoria[0], nombrePdf[0]);
+
+				Notification.show("¡Empresa desadjudicada correctamente! Lotes liberados.",
+								4000, Notification.Position.MIDDLE)
+						.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
 				dialog.close();
-				refrescarDatos(); // Recarga la pantalla de inmediato
+				refrescarDatos();
+			} catch (Exception ex) {
+				Notification.show("Error al desadjudicar: " + ex.getMessage(), 4000, Notification.Position.MIDDLE)
+						.addThemeVariants(NotificationVariant.LUMO_ERROR);
+			}
+		});
+
+		Button btnCancelar = new Button("Cancelar", e -> dialog.close());
+		btnCancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+		dialog.getFooter().add(btnCancelar, btnConfirmarDesadjudicacion);
+		layoutModal.add(advertencia, instruccion, upload);
+		dialog.add(layoutModal);
+		dialog.open();
+	}
+
+	private void abrirDialogoTitulacion() {
+		Dialog dialog = new Dialog();
+		dialog.setHeaderTitle("Otorgar Titularidad - HU 11");
+		dialog.setCloseOnOutsideClick(false);
+		dialog.setCloseOnEsc(false);
+		dialog.setWidth("600px");
+
+		VerticalLayout layoutModal = new VerticalLayout();
+		layoutModal.setPadding(true);
+		layoutModal.setSpacing(true);
+
+		Paragraph instruccion = new Paragraph("Para otorgar la titularidad definitiva a '" +
+				empresaService.obtenerEmpresaCompletaPorId(currentEmpresaId).get().getRazonSocial() +
+				"', cargue el acta de otorgamiento de escritura.");
+		instruccion.getStyle().set("color", "#4A5568").set("font-size", "0.95em");
+
+		// Variables para almacenar el PDF
+		final byte[][] pdfEnMemoria = {null};
+		final String[] nombrePdf = {null};
+
+		// Componente de carga
+		com.vaadin.flow.component.upload.Upload upload = new com.vaadin.flow.component.upload.Upload();
+		upload.setAcceptedFileTypes("application/pdf");
+		upload.setMaxFiles(1);
+
+		com.vaadin.flow.component.upload.receivers.MemoryBuffer buffer =
+				new com.vaadin.flow.component.upload.receivers.MemoryBuffer();
+		upload.setReceiver(buffer);
+
+		Button btnConfirmarTitulacion = new Button("Confirmar Titularidad", VaadinIcon.DIPLOMA.create());
+		btnConfirmarTitulacion.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+		btnConfirmarTitulacion.setEnabled(false);
+
+		upload.addSucceededListener(event -> {
+			try {
+				pdfEnMemoria[0] = buffer.getInputStream().readAllBytes();
+				nombrePdf[0] = event.getFileName();
+				btnConfirmarTitulacion.setEnabled(true);
+				Notification.show("Acta procesada correctamente.", 2000, Notification.Position.BOTTOM_START)
+						.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+			} catch (Exception ex) {
+				Notification.show("Error al leer el archivo: " + ex.getMessage())
+						.addThemeVariants(NotificationVariant.LUMO_ERROR);
+			}
+		});
+
+		upload.addFileRejectedListener(e -> {
+			pdfEnMemoria[0] = null;
+			nombrePdf[0] = null;
+			btnConfirmarTitulacion.setEnabled(false);
+		});
+
+		btnConfirmarTitulacion.addClickListener(e -> {
+			try {
+				Optional<Empresa> empresaOpt = empresaService.obtenerEmpresaCompletaPorId(currentEmpresaId);
+				if (empresaOpt.isPresent()) {
+					Empresa empresa = empresaOpt.get();
+
+					// Guardar el PDF del acta en la empresa
+					empresa.setPdfActaRadicacion(pdfEnMemoria[0]);
+					empresa.setNombreActaRadicacion(nombrePdf[0]);
+
+					// Cambiar estado a TITULADA
+					empresaService.titularEmpresa(currentEmpresaId);
+
+					Notification.show("¡Empresa titulada con éxito! Acta guardada.", 3000,
+									Notification.Position.BOTTOM_END)
+							.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+					dialog.close();
+					refrescarDatos();
+				}
 			} catch (Exception ex) {
 				Notification.show("Error al procesar: " + ex.getMessage(), 4000, Notification.Position.MIDDLE)
 						.addThemeVariants(NotificationVariant.LUMO_ERROR);
 			}
 		});
-		btnConfirmar.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
 
 		Button btnCancelar = new Button("Cancelar", e -> dialog.close());
 		btnCancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-		dialog.getFooter().add(btnCancelar, btnConfirmar);
+		dialog.getFooter().add(btnCancelar, btnConfirmarTitulacion);
+		layoutModal.add(instruccion, upload);
+		dialog.add(layoutModal);
 		dialog.open();
 	}
+//	private void abrirDialogoConfirmacion() {
+//		Dialog dialog = new Dialog();
+//		dialog.setHeaderTitle("Confirmar Titularidad (HU 11)");
+//
+//		VerticalLayout dialogLayout = new VerticalLayout(
+//				new Paragraph("¿Está seguro de que desea otorgar el título de propiedad definitivo a esta empresa?"),
+//				new Paragraph("Esta acción actualizará su estado a TITULADA y dejará constancia del otorgamiento de la escritura.")
+//		);
+//		dialogLayout.setPadding(false);
+//		dialog.add(dialogLayout);
+//
+//		Button btnConfirmar = new Button("Otorgar Título", e -> {
+//			try {
+//				empresaService.titularEmpresa(currentEmpresaId);
+//				Notification.show("¡Empresa titulada con éxito!", 3000, Notification.Position.BOTTOM_END)
+//						.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+//				dialog.close();
+//				refrescarDatos(); // Recarga la pantalla de inmediato
+//			} catch (Exception ex) {
+//				Notification.show("Error al procesar: " + ex.getMessage(), 4000, Notification.Position.MIDDLE)
+//						.addThemeVariants(NotificationVariant.LUMO_ERROR);
+//			}
+//		});
+//		btnConfirmar.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+//
+//		Button btnCancelar = new Button("Cancelar", e -> dialog.close());
+//		btnCancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+//
+//		dialog.getFooter().add(btnCancelar, btnConfirmar);
+//		dialog.open();
+//	}
 
 	private void actualizarEstiloBadge(EstadoEmpresa estado) {
 		badgeCondicion.getStyle().remove("background-color");
@@ -334,6 +513,7 @@ public class EmpresaDetalleView extends VerticalLayout implements HasUrlParamete
 		}
 	}
 }
+
 //package com.unrn.gpiv.views.admin;
 //
 //import com.unrn.gpiv.model.Empresa;

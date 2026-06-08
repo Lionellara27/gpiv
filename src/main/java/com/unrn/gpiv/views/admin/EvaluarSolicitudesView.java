@@ -1,19 +1,20 @@
 package com.unrn.gpiv.views.admin;
 
+import com.unrn.gpiv.common.EstadoEmpresa;
+import com.unrn.gpiv.common.EstadoLote;
 import com.unrn.gpiv.common.EstadoSolicitud;
-import com.unrn.gpiv.model.ProyectoProductivo;
+import com.unrn.gpiv.model.Empresa;
+import com.unrn.gpiv.model.Lote;
 import com.unrn.gpiv.model.SolicitudRadicacion;
 import com.unrn.gpiv.repository.SolicitudRadicacionRepository;
+import com.unrn.gpiv.repository.LoteRepository;
 import com.unrn.gpiv.service.EmpresaService;
+import com.unrn.gpiv.service.LoteService;
 import com.unrn.gpiv.views.MainLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.html.Anchor;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
@@ -35,15 +36,17 @@ public class EvaluarSolicitudesView extends VerticalLayout {
 
     private final SolicitudRadicacionRepository solicitudRepo;
     private final EmpresaService empresaService;
+    private final LoteRepository loteRepository;
     private final Grid<SolicitudRadicacion> grid = new Grid<>(SolicitudRadicacion.class, false);
     private String pestañaActual = "FASE1"; // FASE1, FASE2, APROBADA, RECHAZADA
 
     public EvaluarSolicitudesView(@Autowired SolicitudRadicacionRepository solicitudRepo,
-                                  @Autowired EmpresaService empresaService) {
+								  @Autowired EmpresaService empresaService, LoteRepository loteRepository) {
         this.solicitudRepo = solicitudRepo;
         this.empresaService = empresaService;
+		this.loteRepository = loteRepository;
 
-        setSizeFull();
+		setSizeFull();
         setPadding(true);
         setSpacing(true);
         getStyle().set("background-color", "#f5f7fa");
@@ -203,7 +206,155 @@ public class EvaluarSolicitudesView extends VerticalLayout {
             layout.add(btnAprobarFinal, btnRechazarFase2);
         }
 
+        // Verifica si la empresa ya tiene lotes asignados
+        var empresaOpt = empresaService.obtenerEmpresaPorRepresentante(solicitud.getRepresentante());
+
+
+        // NUEVA SECCIÓN: Agregar después de línea 189 (después de acciones DOCUMENTACION_ENVIADA)
+        // ✨ NUEVO: Botón para ASIGNAR LOTE y pasar a RADICADA
+        if (est == EstadoSolicitud.APROBADA &&
+                solicitud.getRepresentante() != null &&
+                solicitud.getRazonSocialPretendida() != null &&
+                empresaOpt.getEstadoEmpresa() == EstadoEmpresa.INTERESADA) {
+
+            Button btnAsignarLote = new Button(VaadinIcon.PLUS.create(), e -> {
+                abrirDialogoAsignacionLote(solicitud);
+            });
+            btnAsignarLote.setTooltipText("Asignar Lote y Radicar Empresa");
+            btnAsignarLote.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+            layout.add(btnAsignarLote);
+        }
+
         return layout;
+    }
+
+    /**
+     * Abre un diálogo para asignar un lote libre a la empresa y completar la radicación
+     */
+    private void abrirDialogoAsignacionLote(SolicitudRadicacion solicitud) {
+        com.vaadin.flow.component.dialog.Dialog dialog = new com.vaadin.flow.component.dialog.Dialog();
+        dialog.setHeaderTitle("Asignar Lote y Radicar Empresa");
+        dialog.setCloseOnOutsideClick(false);
+        dialog.setCloseOnEsc(false);
+        dialog.setWidth("600px");
+
+        VerticalLayout layoutModal = new VerticalLayout();
+        layoutModal.setPadding(true);
+        layoutModal.setSpacing(true);
+
+        Paragraph instruccion = new Paragraph("Seleccione un lote disponible y cargue el Acta de Radicación para " +
+                "completar el proceso de radicación de '" + solicitud.getRazonSocialPretendida() + "'.");
+        instruccion.getStyle().set("color", "#4A5568").set("font-size", "0.95em");
+
+        // ComboBox para seleccionar lote
+        com.vaadin.flow.component.combobox.ComboBox<Lote> selectorLote =
+                new com.vaadin.flow.component.combobox.ComboBox<>("Lote Disponible");
+        selectorLote.setItemLabelGenerator(lote ->
+                "Manzana " + lote.getManzana() + ", Lote " + lote.getNroLote() +
+                        " (" + lote.getSuperficie() + " m²)");
+
+        // Cargar solo lotes LIBRES
+        List<Lote> lotesLibres = new LoteService(loteRepository).buscarPorEstado(EstadoLote.LIBRE);
+        selectorLote.setItems(lotesLibres);
+        selectorLote.setRequired(true);
+        selectorLote.setPlaceholder("Seleccione un lote");
+
+        // Variables temporales para almacenar datos en memoria
+        final byte[][] archivoEnMemoria = {null};
+        final String[] nombreArchivo = {null};
+
+        // Upload para PDF del Acta
+        com.vaadin.flow.component.upload.Upload upload = new com.vaadin.flow.component.upload.Upload();
+        upload.setAcceptedFileTypes("application/pdf");
+        upload.setMaxFiles(1);
+
+        com.vaadin.flow.component.upload.receivers.MemoryBuffer buffer =
+                new com.vaadin.flow.component.upload.receivers.MemoryBuffer();
+        upload.setReceiver(buffer);
+
+        // Botón para confirmar
+        Button btnConfirmarAsignacion = new Button("Confirmar Asignación y Radicar", VaadinIcon.DATABASE.create());
+        btnConfirmarAsignacion.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        btnConfirmarAsignacion.setEnabled(false); // Bloqueado al inicio
+
+        // Listeners
+        upload.addSucceededListener(event -> {
+            try {
+                archivoEnMemoria[0] = buffer.getInputStream().readAllBytes();
+                nombreArchivo[0] = event.getFileName();
+                btnConfirmarAsignacion.setEnabled(selectorLote.getValue() != null); // Habilita si hay lote
+                Notification.show("Acta procesada correctamente.", 2000, Notification.Position.BOTTOM_START)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception ex) {
+                Notification.show("Error al leer el archivo: " + ex.getMessage())
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
+        upload.addFileRejectedListener(e -> {
+            archivoEnMemoria[0] = null;
+            nombreArchivo[0] = null;
+            btnConfirmarAsignacion.setEnabled(false);
+        });
+
+        // Cambios en la selección del lote
+        selectorLote.addValueChangeListener(e -> {
+            btnConfirmarAsignacion.setEnabled(e.getValue() != null && archivoEnMemoria[0] != null);
+        });
+
+        // Botón confirmar
+        btnConfirmarAsignacion.addClickListener(click -> {
+            try {
+                Lote loteSeleccionado = selectorLote.getValue();
+                if (loteSeleccionado == null) {
+                    Notification.show("Debe seleccionar un lote", 3000, Notification.Position.MIDDLE)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    return;
+                }
+
+                if (archivoEnMemoria[0] == null || archivoEnMemoria[0].length == 0) {
+                    Notification.show("Debe cargar el Acta de Radicación", 3000, Notification.Position.MIDDLE)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    return;
+                }
+
+                // Asignar lote a la empresa
+                Empresa empresaARadicar = empresaService.aprobarRadicacionFinal(
+                        solicitud.getId(),
+                        archivoEnMemoria[0],
+                        nombreArchivo[0]
+                );
+
+                // Asignar lote a empresa
+                loteSeleccionado.setEmpresa(empresaARadicar);
+                loteSeleccionado.setEstado(EstadoLote.OCUPADO);
+                loteSeleccionado.setFechaAsignacion(java.time.LocalDate.now());
+
+                // Guardar cambios
+                LoteService loteService = new LoteService(loteRepository);
+                loteService.guardar(loteSeleccionado);
+
+                empresaARadicar.getLotesAsignados().add(loteSeleccionado);
+                empresaService.actualizarEmpresa(empresaARadicar);
+
+                Notification.show("¡Lote asignado y empresa radicada con éxito!", 4000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+                dialog.close();
+                filtrarGrilla(); // Actualizar tabla
+            } catch (Exception ex) {
+                Notification.show("Error al asignar lote: " + ex.getMessage(), 5000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
+        Button btnCancelar = new Button("Cancelar", e -> dialog.close());
+        btnCancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
+
+        dialog.getFooter().add(btnCancelar, btnConfirmarAsignacion);
+        layoutModal.add(instruccion, selectorLote, new H4("Cargar Acta de Radicación"), upload);
+        dialog.add(layoutModal);
+        dialog.open();
     }
 
     private void abrirDetallesSolicitud(SolicitudRadicacion solicitud) {

@@ -1,5 +1,6 @@
 package com.unrn.gpiv.views.admin;
 
+import com.unrn.gpiv.common.EstadoEmpresa;
 import com.unrn.gpiv.common.TipoServicio;
 import com.unrn.gpiv.model.*;
 import com.unrn.gpiv.service.EmpresaService;
@@ -100,8 +101,11 @@ public class InformesEmpresasView extends VerticalLayout {
             return btnVer;
         }).setHeader("Acciones").setAutoWidth(true);
 
-        List<Empresa> todasLasEmpresas = empresaService.obtenerTodasLasEmpresas();
-        gridEmpresasGeneral.setItems(todasLasEmpresas);
+        List<Empresa> empresasActivas = empresaService.obtenerTodasLasEmpresas().stream()
+                .filter(e -> e.getEstadoEmpresa() == EstadoEmpresa.RADICADA ||
+                        e.getEstadoEmpresa() == EstadoEmpresa.TITULADA)
+                .toList();
+        gridEmpresasGeneral.setItems(empresasActivas);
 
         vistaListado.add(titulo, subtitulo, gridEmpresasGeneral);
     }
