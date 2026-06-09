@@ -7,16 +7,19 @@ import com.unrn.gpiv.service.EmpresaService;
 import com.unrn.gpiv.views.MainLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.FooterRow;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -34,6 +37,12 @@ public class InformesEmpresasView extends VerticalLayout {
     private final EmpresaService empresaService;
     private Empresa empresaSeleccionadaReal;
     private int anioSeleccionado = LocalDate.now().getYear(); // Por defecto el año actual (2026)
+
+    // Botones de acción añadidos desde EmpresaDetalleView
+    private final Button btnTitular = new Button("Titular Empresa", VaadinIcon.DIPLOMA.create());
+    private final Button btnDesadjudicar = new Button("Desadjudicar Empresa", VaadinIcon.TRASH.create());
+    private final Button btnSolicitarInforme = new Button("Solicitar Informe de Avance", VaadinIcon.BELL.create());
+    private final HorizontalLayout contenedorBotonesAccion = new HorizontalLayout();
 
     // Contenedores principales para alternar pantallas
     private VerticalLayout vistaListado = new VerticalLayout();
@@ -237,6 +246,27 @@ public class InformesEmpresasView extends VerticalLayout {
         sectionAvances.add(tAvance, timelineLayout);
 
         vistaDetalle.add(btnVolver, headerCard, cuerpo, sectionAvances);
+
+        btnTitular.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
+        btnTitular.addClickListener(e -> abrirDialogoTitulacion());
+
+        btnDesadjudicar.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+        btnDesadjudicar.addClickListener(e -> abrirDialogoDesadjudicacion());
+
+        btnSolicitarInforme.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        btnSolicitarInforme.getStyle()
+                .set("background-color", "#FF8C00")
+                .set("color", "white")
+                .set("font-weight", "bold");
+        btnSolicitarInforme.addClickListener(e -> ejecutarSolicitudInforme());
+
+        // Contenedor alineado a la derecha
+        contenedorBotonesAccion.getStyle().set("margin-left", "auto");
+        contenedorBotonesAccion.setSpacing(true);
+        contenedorBotonesAccion.add(btnSolicitarInforme, btnTitular, btnDesadjudicar);
+
+        // Agregamos el contenedor al headerCard original
+        headerCard.add(logoEmpresa, infoGral, contenedorBotonesAccion);
     }
 
     private void mostrarDetalleEmpresa(Empresa empresaVieja) {
@@ -264,6 +294,23 @@ public class InformesEmpresasView extends VerticalLayout {
         // 2. Cargar datos reales y ACTUALIZAR TÍTULOS CON CONTADORES
         gridConsumos.setItems(empresaSeleccionadaReal.getConsumosMensuales());
         gridLotes.setItems(empresaSeleccionadaReal.getLotesAsignados());
+
+        EstadoEmpresa est = empresaSeleccionadaReal.getEstadoEmpresa() != null ?
+                empresaSeleccionadaReal.getEstadoEmpresa() : EstadoEmpresa.INTERESADA;
+
+        if (est == EstadoEmpresa.RADICADA) {
+            btnTitular.setVisible(true);          // Se puede pasar a titular
+            btnDesadjudicar.setVisible(true);     // Se puede desadjudicar
+            btnSolicitarInforme.setVisible(true); // Se le pueden pedir informes
+        } else if (est == EstadoEmpresa.TITULADA) {
+            btnTitular.setVisible(false);         // Ya está titulada, ocultamos o deshabilitamos
+            btnDesadjudicar.setVisible(true);     // Aún se puede desadjudicar si incumple
+            btnSolicitarInforme.setVisible(true);
+        } else { // Caso INTERESADA o NULL
+            btnTitular.setVisible(true);
+            btnDesadjudicar.setVisible(true);
+            btnSolicitarInforme.setVisible(true);
+        }
 
         // --- AQUÍ ESTÁ LA MAGIA DE LOS TAMAÑOS ---
         // Personal y Totales
@@ -441,6 +488,163 @@ public class InformesEmpresasView extends VerticalLayout {
         badge.getStyle().set("font-weight", "bold");
         badge.getStyle().set("font-size", "0.85em");
         return badge;
+    }
+
+    private void ejecutarSolicitudInforme() {
+        if (empresaSeleccionadaReal == null) return;
+
+        List<Long> empresasNotificadas = (List<Long>) VaadinSession.getCurrent().getAttribute("alertasInformes");
+        if (empresasNotificadas == null) {
+            empresasNotificadas = new ArrayList<>();
+        }
+        if (!empresasNotificadas.contains(empresaSeleccionadaReal.getId())) {
+            empresasNotificadas.add(empresaSeleccionadaReal.getId());
+        }
+        VaadinSession.getCurrent().setAttribute("alertasInformes", empresasNotificadas);
+        Notification.show("¡Notificación registrada en memoria para esta empresa!", 3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+    }
+
+    private void abrirDialogoDesadjudicacion() {
+        if (empresaSeleccionadaReal == null) return;
+
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Desadjudicar Empresa");
+        dialog.setCloseOnOutsideClick(false);
+        dialog.setCloseOnEsc(false);
+        dialog.setWidth("600px");
+
+        VerticalLayout layoutModal = new VerticalLayout();
+        layoutModal.setPadding(true);
+        layoutModal.setSpacing(true);
+
+        Paragraph advertencia = new Paragraph("⚠️ ADVERTENCIA: Esta acción es irreversible. " +
+                "Se liberarán todos los lotes asignados a '" + empresaSeleccionadaReal.getRazonSocial() +
+                "' y su estado pasará a DESADJUDICADA.");
+        advertencia.getStyle().set("color", "#d32f2f").set("font-weight", "bold").set("font-size", "0.95em");
+
+        Paragraph instruccion = new Paragraph("Para completar el proceso, cargue el acta oficial de desadjudicación.");
+        instruccion.getStyle().set("color", "#4A5568").set("font-size", "0.95em");
+
+        final byte[][] pdfEnMemoria = {null};
+        final String[] nombrePdf = {null};
+
+        com.vaadin.flow.component.upload.Upload upload = new com.vaadin.flow.component.upload.Upload();
+        upload.setAcceptedFileTypes("application/pdf");
+        upload.setMaxFiles(1);
+
+        com.vaadin.flow.component.upload.receivers.MemoryBuffer buffer = new com.vaadin.flow.component.upload.receivers.MemoryBuffer();
+        upload.setReceiver(buffer);
+
+        Button btnConfirmarDesadjudicacion = new Button("Confirmar Desadjudicación", VaadinIcon.TRASH.create());
+        btnConfirmarDesadjudicacion.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
+        btnConfirmarDesadjudicacion.setEnabled(false);
+
+        upload.addSucceededListener(event -> {
+            try {
+                pdfEnMemoria[0] = buffer.getInputStream().readAllBytes();
+                nombrePdf[0] = event.getFileName();
+                btnConfirmarDesadjudicacion.setEnabled(true);
+                Notification.show("Acta procesada correctamente.", 2000, Notification.Position.BOTTOM_START)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception ex) {
+                Notification.show("Error al leer el archivo: " + ex.getMessage())
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
+        btnConfirmarDesadjudicacion.addClickListener(e -> {
+            try {
+                empresaService.desadjudicarEmpresa(empresaSeleccionadaReal.getId(), pdfEnMemoria[0], nombrePdf[0]);
+                Notification.show("¡Empresa desadjudicada correctamente! Lotes liberados.", 4000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                dialog.close();
+
+                // Refrescar la vista actual simulando una re-selección
+                mostrarDetalleEmpresa(empresaSeleccionadaReal);
+            } catch (Exception ex) {
+                Notification.show("Error al desadjudicar: " + ex.getMessage(), 4000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
+        Button btnCancelar = new Button("Cancelar", e -> dialog.close());
+        btnCancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        dialog.getFooter().add(btnCancelar, btnConfirmarDesadjudicacion);
+        layoutModal.add(advertencia, instruccion, upload);
+        dialog.add(layoutModal);
+        dialog.open();
+    }
+
+    private void abrirDialogoTitulacion() {
+        if (empresaSeleccionadaReal == null) return;
+
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Otorgar Titularidad - HU 11");
+        dialog.setCloseOnOutsideClick(false);
+        dialog.setCloseOnEsc(false);
+        dialog.setWidth("600px");
+
+        VerticalLayout layoutModal = new VerticalLayout();
+        layoutModal.setPadding(true);
+        layoutModal.setSpacing(true);
+
+        Paragraph instruccion = new Paragraph("Para otorgar la titularidad definitiva a '" +
+                empresaSeleccionadaReal.getRazonSocial() + "', cargue el acta de otorgamiento de escritura.");
+        instruccion.getStyle().set("color", "#4A5568").set("font-size", "0.95em");
+
+        final byte[][] pdfEnMemoria = {null};
+        final String[] nombrePdf = {null};
+
+        com.vaadin.flow.component.upload.Upload upload = new com.vaadin.flow.component.upload.Upload();
+        upload.setAcceptedFileTypes("application/pdf");
+        upload.setMaxFiles(1);
+
+        com.vaadin.flow.component.upload.receivers.MemoryBuffer buffer = new com.vaadin.flow.component.upload.receivers.MemoryBuffer();
+        upload.setReceiver(buffer);
+
+        Button btnConfirmarTitulacion = new Button("Confirmar Titularidad", VaadinIcon.DIPLOMA.create());
+        btnConfirmarTitulacion.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        btnConfirmarTitulacion.setEnabled(false);
+
+        upload.addSucceededListener(event -> {
+            try {
+                pdfEnMemoria[0] = buffer.getInputStream().readAllBytes();
+                nombrePdf[0] = event.getFileName();
+                btnConfirmarTitulacion.setEnabled(true);
+                Notification.show("Acta procesada correctamente.", 2000, Notification.Position.BOTTOM_START)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception ex) {
+                Notification.show("Error al leer el archivo: " + ex.getMessage())
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
+        btnConfirmarTitulacion.addClickListener(e -> {
+            try {
+                empresaSeleccionadaReal.setPdfActaRadicacion(pdfEnMemoria[0]);
+                empresaSeleccionadaReal.setNombreActaRadicacion(nombrePdf[0]);
+
+                empresaService.titularEmpresa(empresaSeleccionadaReal.getId());
+                Notification.show("¡Empresa titulada con éxito! Acta guardada.", 3000, Notification.Position.BOTTOM_END)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                dialog.close();
+
+                mostrarDetalleEmpresa(empresaSeleccionadaReal);
+            } catch (Exception ex) {
+                Notification.show("Error al procesar: " + ex.getMessage(), 4000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
+        Button btnCancelar = new Button("Cancelar", e -> dialog.close());
+        btnCancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        dialog.getFooter().add(btnCancelar, btnConfirmarTitulacion);
+        layoutModal.add(instruccion, upload);
+        dialog.add(layoutModal);
+        dialog.open();
     }
 }
 
