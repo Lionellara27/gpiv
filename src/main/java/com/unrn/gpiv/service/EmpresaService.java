@@ -157,7 +157,7 @@ public class EmpresaService {
         nuevaEmpresa.setRepresentante(solicitud.getRepresentante());
         nuevaEmpresa.setProyecto(solicitud.getProyecto());
         nuevaEmpresa.setTitulada(false);
-        nuevaEmpresa.setEstadoEmpresa(EstadoEmpresa.RADICADA);
+        nuevaEmpresa.setEstadoEmpresa(EstadoEmpresa.INTERESADA);
         nuevaEmpresa.setFechaRadicacion(LocalDate.now());
 
         //Guardamos el acta de radicacion
@@ -215,7 +215,7 @@ public class EmpresaService {
         nuevaEmpresa.setProyecto(solicitud.getProyecto());
         nuevaEmpresa.setTitulada(false);
         nuevaEmpresa.setEstado(EstadoSolicitud.APROBADA);
-        nuevaEmpresa.setEstadoEmpresa(EstadoEmpresa.RADICADA);
+        nuevaEmpresa.setEstadoEmpresa(EstadoEmpresa.INTERESADA);
         nuevaEmpresa.setFechaRadicacion(LocalDate.now());
 
         if (solicitud.getRepresentante() != null && solicitud.getRepresentante().getCuitPersonal() != null) {

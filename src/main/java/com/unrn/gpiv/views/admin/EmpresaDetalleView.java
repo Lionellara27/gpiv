@@ -21,6 +21,7 @@ import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import java.util.ArrayList;
@@ -39,11 +40,13 @@ public class EmpresaDetalleView extends VerticalLayout implements HasUrlParamete
 	private Span rubroElement = new Span();
 	private Paragraph descElement = new Paragraph();
 	private Span badgeCondicion = new Span();
+
+	// Botones de acción de la cabecera
 	private Button btnTitular = new Button("Titular Empresa", VaadinIcon.DIPLOMA.create());
 	private Button btnDesadjudicar = new Button("Desadjudicar Empresa", VaadinIcon.TRASH.create());
-	private Button btnSolicitarInforme = new Button("Solicitar Informe de Avance", VaadinIcon.BELL.create()); // boton para la notificacion a la empresa
+	private Button btnSolicitarInforme = new Button("Solicitar Informe de Avance", VaadinIcon.BELL.create());
 
-	// Grids de Datos Reales
+	// Grids y Contenedores
 	private Grid<Lote> gridLotes = new Grid<>(Lote.class, false);
 	private Grid<Recurso> gridHerramientas = new Grid<>(Recurso.class, false);
 	private VerticalLayout timelineAvances = new VerticalLayout();
@@ -79,60 +82,53 @@ public class EmpresaDetalleView extends VerticalLayout implements HasUrlParamete
 		rubroElement.getStyle().set("color", "#0063BE").set("font-weight", "bold");
 		descElement.getStyle().set("color", "#666");
 
-		// Configuración estética del Badge de condición
 		badgeCondicion.getElement().getThemeList().add("badge");
 		badgeCondicion.getStyle().set("margin-top", "5px");
 
 		infoGral.add(nombreElement, rubroElement, descElement, badgeCondicion);
 
+		// Contenedor exclusivo para los botones (así se alinean perfectamente a la derecha)
+		HorizontalLayout contenedorBotones = new HorizontalLayout();
+		contenedorBotones.getStyle().set("margin-left", "auto");
+		contenedorBotones.setSpacing(true);
+
 		// Configuración del botón de Escrituración / Titularidad
 		btnTitular.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
-		btnTitular.getStyle().set("margin-left", "auto"); // Lo empuja hacia el extremo derecho
 		btnTitular.addClickListener(e -> abrirDialogoTitulacion());
 
-		header.add(logoEmpresa, infoGral, btnTitular);
 		// Configuración del botón de Desadjudicación
 		btnDesadjudicar.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
-		btnDesadjudicar.getStyle().set("margin-left", "10px");
 		btnDesadjudicar.addClickListener(e -> abrirDialogoDesadjudicacion());
-		header.add(btnDesadjudicar);
 
-		// --- LOGICA DE NOTIFICACION POR SESIÓN ---
+		// Configuración del botón de Notificación
 		btnSolicitarInforme.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 		btnSolicitarInforme.getStyle()
-				.set("margin-left", "10px")
 				.set("background-color", "#FF8C00")
 				.set("color", "white")
 				.set("font-weight", "bold");
 
 		btnSolicitarInforme.addClickListener(e -> {
-			java.util.List<Long> empresasNotificadas = (java.util.List<Long>) com.vaadin.flow.server.VaadinSession.getCurrent().getAttribute("alertasInformes");
-
-			// Si es la primera vez, la lista va a ser null, entonces la creamos
+			List<Long> empresasNotificadas = (List<Long>) VaadinSession.getCurrent().getAttribute("alertasInformes");
 			if (empresasNotificadas == null) {
-				empresasNotificadas = new java.util.ArrayList<>();
+				empresasNotificadas = new ArrayList<>();
 			}
-
-			// meto el ID de la empresa que el Admin está mirando en la lista (si no estaba ya)
 			if (!empresasNotificadas.contains(currentEmpresaId)) {
 				empresasNotificadas.add(currentEmpresaId);
 			}
-
-			// guardo la lista actualizada de nuevo en la sesion global
-			com.vaadin.flow.server.VaadinSession.getCurrent().setAttribute("alertasInformes", empresasNotificadas);
-
+			VaadinSession.getCurrent().setAttribute("alertasInformes", empresasNotificadas);
 			Notification.show("¡Notificación registrada en memoria para esta empresa!", 3000, Notification.Position.TOP_CENTER)
 					.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 		});
 
-		header.add(btnSolicitarInforme);
+		// Agregamos los botones a su contenedor y luego al header
+		contenedorBotones.add(btnSolicitarInforme, btnTitular, btnDesadjudicar);
+		header.add(logoEmpresa, infoGral, contenedorBotones);
 
 		// --- 2. CUERPO: LOTES (IZQ) Y HERRAMIENTAS (DER) ---
 		HorizontalLayout cuerpo = new HorizontalLayout();
 		cuerpo.setWidthFull();
 		cuerpo.setSpacing(true);
 
-		// Panel Izquierdo: Lotes Asignados
 		VerticalLayout sectionLotes = new VerticalLayout();
 		sectionLotes.setWidth("50%");
 		sectionLotes.getStyle().set("background-color", "white").set("border-radius", "15px").set("padding", "1.5em");
@@ -140,7 +136,6 @@ public class EmpresaDetalleView extends VerticalLayout implements HasUrlParamete
 		configurarTablaLotes();
 		sectionLotes.add(tLotes, gridLotes);
 
-		// Panel Derecho: Inventario Integral (Aportado + Prestado)
 		VerticalLayout sectionRecursos = new VerticalLayout();
 		sectionRecursos.setWidth("50%");
 		sectionRecursos.getStyle().set("background-color", "white").set("border-radius", "15px").set("padding", "1.5em");
@@ -226,19 +221,19 @@ public class EmpresaDetalleView extends VerticalLayout implements HasUrlParamete
 			badgeCondicion.setText("CONDICIÓN: " + est.toString());
 			actualizarEstiloBadge(est);
 
-			// Control de visibilidad del botón "Titular Empresa"
-			// Solo se puede titular si ya está Radicada
+			// --- AQUÍ APLICAMOS LAS CONDICIONES REALES DE NEGOCIO ---
 			if (est == EstadoEmpresa.RADICADA) {
-				btnTitular.setVisible(true);
-				btnDesadjudicar.setVisible(true); // También permite desadjudicar si está RADICADA
-				btnSolicitarInforme.setVisible(true);
+				btnTitular.setVisible(true);          // Se puede pasar a titular
+				btnDesadjudicar.setVisible(true);     // Se puede desadjudicar
+				btnSolicitarInforme.setVisible(true); // Se le pueden pedir informes
 			} else if (est == EstadoEmpresa.TITULADA) {
-				btnTitular.setVisible(false);
+				btnTitular.setVisible(true);         // Ya está titulada, no hace falta el botón
+				btnDesadjudicar.setVisible(true);     // Aún se puede desadjudicar si incumple
+				btnSolicitarInforme.setVisible(true);
+			} else { // Caso INTERESADA o NULL
+				btnTitular.setVisible(true);
 				btnDesadjudicar.setVisible(true);
 				btnSolicitarInforme.setVisible(true);
-			} else {
-				btnTitular.setVisible(false);
-				btnDesadjudicar.setVisible(false);
 			}
 
 			// 2. Cargar tabla de Lotes
