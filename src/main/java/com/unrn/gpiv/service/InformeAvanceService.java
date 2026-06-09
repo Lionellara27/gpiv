@@ -7,9 +7,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class InformeAvanceService {
     @Autowired
     private InformeAvanceRepository informeRepository;
