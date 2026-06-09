@@ -137,7 +137,7 @@ public class AdminDashboardView extends VerticalLayout {
                 return r.getPrestadoA().getRazonSocial() + " [En Uso]";
             }
 
-            return "En Pañol";
+            return "En deposito";
         }).setHeader("Poseedor").setSortable(true);
 //        grid.addColumn(r -> r.getPrestadoA() != null ? r.getPrestadoA().getRazonSocial() : "En Pañol").setHeader("Poseedor");
 
