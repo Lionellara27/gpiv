@@ -43,40 +43,44 @@ public class AdminDashboardView extends VerticalLayout {
 
         H2 header = new H2("Tablero de Gestión Municipal");
 
-// --- TARJETAS KPI (LIMPIO) ---
+// --- TARJETAS KPI (DINÁMICAS E INTERACTIVAS) ---
         HorizontalLayout kpiLayout = new HorizontalLayout();
         kpiLayout.setWidthFull();
         kpiLayout.setSpacing(true);
 
-// 1. La tarjeta dinámica que acabamos de arreglar
-        long numPendientes = empresaService.contarSolicitudesPendientes();
-        String textoPendientes = numPendientes + (numPendientes == 1 ? " PENDIENTE" : " PENDIENTES");
-
-        VerticalLayout cardSolicitudes = crearTarjetaKPI("SOLICITUDES", textoPendientes, VaadinIcon.FILE_TEXT, "#0063BE");
-        cardSolicitudes.getStyle().set("cursor", "pointer");
-        cardSolicitudes.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("admin/evaluar")));
-
-// 2. Agregamos UNA SOLA VEZ cada tarjeta al layout
-        /* viejo que anda pero no es interactivo kpiLayout.add(
-                cardSolicitudes, // La azul primero (o donde más te guste)
-                crearTarjetaKPI("LOTES", "12 LIBRES", VaadinIcon.MAP_MARKER, "#009A3B"),
-                crearTarjetaKPI("EMPRESAS", "45 RADICADAS", VaadinIcon.FACTORY, "#666"),
-                crearTarjetaKPI("PRÉSTAMOS", "2 ACTIVOS", VaadinIcon.TOOLS, "#E67E22")
-        );*/
-
-        // 1. Pedimos los números reales a los servicios
+        // 1. Pedimos los números reales a los servicios de la base de datos
         long cantLotes = loteService.contarLotesLibres();
         long cantEmpresas = empresaService.contarEmpresasRadicadas();
         long cantPrestamos = recursoService.obtenerCantidadPrestados();
         long cantSolicitudes = empresaService.contarSolicitudesPendientes();
 
-// 2. Construimos las tarjetas con esos valores (Concatenamos el número con el texto)
-        kpiLayout.add(
-                crearTarjetaKPI("SOLICITUDES", cantSolicitudes + " PENDIENTES", VaadinIcon.ENVELOPE, "#0072BB"),
-                crearTarjetaKPI("LOTES", cantLotes + " LIBRES", VaadinIcon.MAP_MARKER, "#009A3B"),
-                crearTarjetaKPI("EMPRESAS", cantEmpresas + " RADICADAS", VaadinIcon.FACTORY, "#666"),
-                crearTarjetaKPI("PRÉSTAMOS", cantPrestamos + " ACTIVOS", VaadinIcon.TOOLS, "#E67E22")
-        );
+        // 2. Configuración de Tarjeta: SOLICITUDES (Navega a evaluar solicitudes)
+        String textoSolicitudes = cantSolicitudes + (cantSolicitudes == 1 ? " PENDIENTE" : " PENDIENTES");
+        VerticalLayout cardSolicitudes = crearTarjetaKPI("SOLICITUDES", textoSolicitudes, VaadinIcon.ENVELOPE, "#0072BB");
+        cardSolicitudes.getStyle().set("cursor", "pointer"); // Transforma el cursor en manito
+        cardSolicitudes.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("admin/evaluar")));
+
+        // 3. Configuración de Tarjeta: LOTES (Navega a gestión de lotes)
+        String textoLotes = cantLotes + (cantLotes == 1 ? " LIBRE" : " LIBRES");
+        VerticalLayout cardLotes = crearTarjetaKPI("LOTES", textoLotes, VaadinIcon.MAP_MARKER, "#009A3B");
+        cardLotes.getStyle().set("cursor", "pointer");
+        cardLotes.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("admin/lotes")));
+
+        // 4. Configuración de Tarjeta: EMPRESAS (Navega a informe de empresas)
+        String textoEmpresas = cantEmpresas + (cantEmpresas == 1 ? " RADICADA" : " RADICADAS");
+        VerticalLayout cardEmpresas = crearTarjetaKPI("EMPRESAS", textoEmpresas, VaadinIcon.FACTORY, "#666");
+        cardEmpresas.getStyle().set("cursor", "pointer");
+        cardEmpresas.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("admin/informe-empresas")));
+
+        // 5. Configuración de Tarjeta: PRÉSTAMOS (Navega al inventario de recursos)
+        String textoPrestamos = cantPrestamos + (cantPrestamos == 1 ? " ACTIVO" : " ACTIVOS");
+        VerticalLayout cardPrestamos = crearTarjetaKPI("PRÉSTAMOS", textoPrestamos, VaadinIcon.TOOLS, "#E67E22");
+        cardPrestamos.getStyle().set("cursor", "pointer");
+        cardPrestamos.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("admin/inventario")));
+
+        // 6. Inyectamos las 4 variables ya configuradas con sus listeners al layout horizontal
+        kpiLayout.add(cardSolicitudes, cardLotes, cardEmpresas, cardPrestamos);
+
 
         // --- CONTENEDOR DE TABLAS (MITAD Y MITAD) ---
         HorizontalLayout tablasLayout = new HorizontalLayout();
