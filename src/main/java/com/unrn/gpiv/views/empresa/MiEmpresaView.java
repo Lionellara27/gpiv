@@ -47,12 +47,11 @@ public class MiEmpresaView extends VerticalLayout {
         Empresa empresaData = empresaService.obtenerEmpresaPorRepresentante(logueado);
 
         //CONTROL ESTRICTO:
-        //Si la empresa ya tiene dirección, o ya tiene tipo de sociedad, o ya tiene lotes asignados, ya se da por registrada
-        boolean yaRegistrada = (empresaData != null && (
-                (empresaData.getDireccion() != null && !empresaData.getDireccion().trim().isEmpty()) ||
-                        (empresaData.getTipoSociedad() != null && !empresaData.getTipoSociedad().trim().isEmpty()) ||
-                        (empresaData.getLotesAsignados() != null && !empresaData.getLotesAsignados().isEmpty())
-        ));
+        //Si la empresa ya tiene dirección, o ya tiene tipo de sociedad, ya se da por registrada
+        boolean yaRegistrada = (empresaData != null &&
+                empresaData.getDireccion() != null && !empresaData.getDireccion().trim().isEmpty() &&
+                empresaData.getTipoSociedad() != null && !empresaData.getTipoSociedad().trim().isEmpty());
+
         H2 titulo = new H2("Registro Final de la Empresa");
         add(titulo);
 
@@ -92,6 +91,17 @@ public class MiEmpresaView extends VerticalLayout {
             comboSociedad.setReadOnly(true);
             txtTelEmergencia.setReadOnly(true);
             txtInscripcion.setReadOnly(true);
+        } else if (empresaData != null) {
+            //Por si se se le asignó un lote a la empresa que todavia no lleno los datos, se dejan habilitados los campos
+            txtDomicilio.setValue(empresaData.getDireccion() != null ? empresaData.getDireccion() : "");
+            comboSociedad.setValue(empresaData.getTipoSociedad() != null ? empresaData.getTipoSociedad() : "");
+            txtTelEmergencia.setValue(empresaData.getTelefonoEmergencia() != null ? empresaData.getTelefonoEmergencia() : "");
+            txtInscripcion.setValue(empresaData.getInscripcionRegistral() != null ? empresaData.getInscripcionRegistral() : "");
+
+            txtDomicilio.setReadOnly(false);
+            comboSociedad.setReadOnly(false);
+            txtTelEmergencia.setReadOnly(false);
+            txtInscripcion.setReadOnly(false);
         }
 
         formNuevosDatos.add(txtDomicilio, comboSociedad, txtTelEmergencia, txtInscripcion);

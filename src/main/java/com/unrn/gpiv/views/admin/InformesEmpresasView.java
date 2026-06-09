@@ -390,7 +390,13 @@ public class InformesEmpresasView extends VerticalLayout {
         H4 txtAnuncio = new H4(informe.getTitulo());
         txtAnuncio.getStyle().set("margin-top", "4px").set("margin-bottom", "4px");
 
-        Span badgeEstado = new Span(informe.getEstadoCumplimiento().name());
+        String textoEstado = (informe.getEstadoCumplimiento() != null)
+                ? informe.getEstadoCumplimiento().name()
+                : "SIN EVALUAR";
+
+    // Ahora creamos el Span pasando el texto seguro que nunca va a ser null
+        Span badgeEstado = new Span(textoEstado);
+
         badgeEstado.getStyle().set("font-size", "0.75em")
                 .set("padding", "2px 8px")
                 .set("border-radius", "10px")

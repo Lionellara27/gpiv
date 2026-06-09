@@ -3,6 +3,9 @@ package com.unrn.gpiv.model;
 import com.unrn.gpiv.common.EstadoEmpresa;
 import com.unrn.gpiv.common.EstadoSolicitud;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.type.descriptor.jdbc.VarbinaryJdbcType;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +33,11 @@ public class Empresa {
 
     private String direccion; // Dirección legal/administrativa
 
+    @Column(columnDefinition = "bytea")
     private byte[] pdfActaRadicacion;
     private String nombreActaRadicacion;
 
+    @Column(columnDefinition = "bytea")
     private byte[] pdfActaDesadjudicacion;
     private String nombreActaDesadjudicacion;
 
@@ -51,7 +56,7 @@ public class Empresa {
 
     // --- NUEVOS CAMPOS Y RELACIONES PARA LA HU 4 (aVANCE) ---
 
-    @Lob
+    @Column(name = "logo", columnDefinition = "bytea")
     private byte[] logo; // Imagen del logo de la empresa
 
     @Column(columnDefinition = "TEXT")
@@ -75,12 +80,6 @@ public class Empresa {
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "representante_id", referencedColumnName = "id")
     private RepresentanteEmpresa representante;
-
-    // --- RELACIÓN CON EL ESPACIO FÍSICO ---
-
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "lote_id")                 TENGO QUE BORRAR ESTO
-//    private Lote loteAsignado; // Asignado por el Admin al aprobar
 
     // cambio la relacion, para que una empresa pueda tener varios lotes
     @OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
