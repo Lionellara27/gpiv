@@ -15,7 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class EmpresaService {
@@ -354,5 +356,16 @@ public class EmpresaService {
         });
 
         return empresaOpt;
+    }
+
+    //parte estadistica
+    // Agregá esto para contar empleados por empresa (Top 5)
+    @Transactional(readOnly = true)
+    public Map<String, Integer> obtenerEmpleadosPorEmpresa() {
+        return empresaRepository.findAll().stream()
+                .collect(Collectors.toMap(
+                        Empresa::getRazonSocial,
+                        e -> e.getEmpleados().size()
+                ));
     }
 }

@@ -76,7 +76,14 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- ESTADISTICAS -->
+		<!-- <dependency>
+			<groupId>com.vaadin</groupId>
+			<artifactId>vaadin-charts-flow</artifactId>
+		</dependency>  -->
+
 	</dependencies>
+
 
 	<!-- VAADIN BOM -->
 	<dependencyManagement>
