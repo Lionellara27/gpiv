@@ -185,18 +185,11 @@ public class EvaluarSolicitudesView extends VerticalLayout {
         // 2. Acciones para FASE 2 (Lleva a APROBACIÓN DEFINITIVA)
         if (est == EstadoSolicitud.DOCUMENTACION_ENVIADA) {
             Button btnAprobarFinal = new Button(VaadinIcon.CHECK_CIRCLE.create(), e -> {
-                try {
-                    // Crea la empresa física y la mete en la cola del parque industrial
-                    var emp = empresaService.aprobarRadicacionFinal(solicitud.getId());
-                    Notification.show("¡Radicación Aprobada Definitivamente! Empresa creada: " + emp.getRazonSocial(), 4000, Notification.Position.MIDDLE)
-                            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-                    filtrarGrilla();
-                } catch (Exception ex) {
-                    Notification.show("Error en aprobación final: " + ex.getMessage()).addThemeVariants(NotificationVariant.LUMO_ERROR);
-                }
+                // 🎯 En lugar de ejecutar directo, abrimos la ventana flotante obligatoria
+                abrirDialogoSubidaActa(solicitud);
             });
             btnAprobarFinal.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
-            btnAprobarFinal.setTooltipText("Dar Aprobación Radicación Definitiva");
+            btnAprobarFinal.setTooltipText("Dar Aprobación Radicación Definitiva (Requiere Acta PDF)");
 
             Button btnRechazarFase2 = new Button(VaadinIcon.CLOSE.create(), e -> {
                 solicitud.setEstado(EstadoSolicitud.RECHAZADA);
@@ -303,6 +296,84 @@ public class EvaluarSolicitudesView extends VerticalLayout {
             });
         }
         return layout;
+    }
+
+    //Este método se encarga de fabricar el cartel flotante, procesar el archivo en memoria de forma segura
+    // y llamar al servicio solo cuando todo este en regla
+    private void abrirDialogoSubidaActa(SolicitudRadicacion solicitud) {
+        com.vaadin.flow.component.dialog.Dialog dialog = new com.vaadin.flow.component.dialog.Dialog();
+        dialog.setHeaderTitle("Subir Acta Oficial de Radicación");
+        dialog.setCloseOnOutsideClick(false);
+        dialog.setCloseOnEsc(false);
+
+        VerticalLayout layoutModal = new VerticalLayout();
+        layoutModal.setPadding(true);
+        layoutModal.setSpacing(true);
+
+        Paragraph instruccion = new Paragraph("Para finalizar la radicación de '" + solicitud.getRazonSocialPretendida() +
+                "', cargue el acta oficial aprobada en formato PDF. Este documento es obligatorio.");
+        instruccion.getStyle().set("color", "#4A5568").set("font-size", "0.95em");
+
+        //Variables temporales para alojar el PDF cargado en memoria
+        final byte[][] archivoEnMemoria = {null};
+        final String[] nombreArchivo = {null};
+
+        // Componente de subida de Vaadin
+        com.vaadin.flow.component.upload.Upload upload = new com.vaadin.flow.component.upload.Upload();
+        upload.setAcceptedFileTypes("application/pdf");
+        upload.setMaxFiles(1);
+
+        // Configuramos el receptor de bytes
+        com.vaadin.flow.component.upload.receivers.MemoryBuffer buffer = new com.vaadin.flow.component.upload.receivers.MemoryBuffer();
+        upload.setReceiver(buffer);
+
+        Button btnConfirmarRadicacion = new Button("Confirmar Radicación", VaadinIcon.DATABASE.create());
+        btnConfirmarRadicacion.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
+        btnConfirmarRadicacion.setEnabled(false); // 🔒 Bloqueado al inicio hasta que suba el archivo
+
+        // Listener de éxito de carga
+        upload.addSucceededListener(event -> {
+            try {
+                archivoEnMemoria[0] = buffer.getInputStream().readAllBytes();
+                nombreArchivo[0] = event.getFileName();
+                btnConfirmarRadicacion.setEnabled(true); // 🔓 Desbloqueamos el botón final
+                Notification.show("Acta procesada correctamente.", 2000, Notification.Position.BOTTOM_START)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception ex) {
+                Notification.show("Error al leer el archivo: " + ex.getMessage()).addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
+        // Si borra el archivo cargado, volvemos a bloquear
+        upload.addFileRejectedListener(e -> {
+            archivoEnMemoria[0] = null;
+            nombreArchivo[0] = null;
+            btnConfirmarRadicacion.setEnabled(false);
+        });
+
+        btnConfirmarRadicacion.addClickListener(click -> {
+            try {
+                //ejecuta la lógica transaccional segura pasándole el PDF
+                var emp = empresaService.aprobarRadicacionFinal(solicitud.getId(), archivoEnMemoria[0], nombreArchivo[0]);
+
+                Notification.show("¡Empresa Radicada de forma definitiva! Acta guardada.", 4000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+                dialog.close();
+                filtrarGrilla(); //actualizams la grilla principal del administrador
+            } catch (Exception ex) {
+                Notification.show("Error al radicar: " + ex.getMessage(), 5000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
+        Button btnCancelar = new Button("Cancelar", e -> dialog.close());
+        btnCancelar.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_ERROR);
+
+        dialog.getFooter().add(btnCancelar, btnConfirmarRadicacion);
+        layoutModal.add(instruccion, upload);
+        dialog.add(layoutModal);
+        dialog.open();
     }
 
     private void filtrarGrilla() {

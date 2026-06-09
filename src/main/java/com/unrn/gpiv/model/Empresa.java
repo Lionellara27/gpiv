@@ -30,6 +30,12 @@ public class Empresa {
 
     private String direccion; // Dirección legal/administrativa
 
+    private byte[] pdfActaRadicacion;
+    private String nombreActaRadicacion;
+
+    private byte[] pdfActaDesadjudicacion;
+    private String nombreActaDesadjudicacion;
+
     private boolean titulada = false; // Si ya tiene el título de propiedad del lote
 
     @Column(name = "tipo_sociedad")
@@ -184,6 +190,38 @@ public class Empresa {
         this.inscripcionRegistral = inscripcionRegistral;
     }
 
+    public byte[] getPdfActaRadicacion() {
+        return pdfActaRadicacion;
+    }
+
+    public void setPdfActaRadicacion(byte[] pdfActaRadicacion) {
+        this.pdfActaRadicacion = pdfActaRadicacion;
+    }
+
+    public String getNombreActaRadicacion() {
+        return nombreActaRadicacion;
+    }
+
+    public void setNombreActaRadicacion(String nombreActaRadicacion) {
+        this.nombreActaRadicacion = nombreActaRadicacion;
+    }
+
+    public byte[] getPdfActaDesadjudicacion() {
+        return pdfActaDesadjudicacion;
+    }
+
+    public void setPdfActaDesadjudicacion(byte[] pdfActaDesadjudicacion) {
+        this.pdfActaDesadjudicacion = pdfActaDesadjudicacion;
+    }
+
+    public String getNombreActaDesadjudicacion() {
+        return nombreActaDesadjudicacion;
+    }
+
+    public void setNombreActaDesadjudicacion(String nombreActaDesadjudicacion) {
+        this.nombreActaDesadjudicacion = nombreActaDesadjudicacion;
+    }
+
     public boolean isDatosFinalesCompletos() {
         return datosFinalesCompletos;
     }
@@ -191,6 +229,8 @@ public class Empresa {
     public void setDatosFinalesCompletos(boolean datosFinalesCompletos) {
         this.datosFinalesCompletos = datosFinalesCompletos;
     }
+
+
 
     //parte nueva para los avances
     // --- GETTERS Y SETTERS HU 4 ---

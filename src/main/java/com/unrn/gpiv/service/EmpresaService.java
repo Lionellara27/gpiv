@@ -76,6 +76,11 @@ public class EmpresaService {
         solicitudRepository.save(solicitud);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<Empresa> obtenerPorId(Long id) {
+        return empresaRepository.findById(id);
+    }
+
     //agregué este metodo para terminar de completar la empresa (no funcionaba bien antes)
     @Transactional
     public void completarRegistroLegalEmpresa(Long empresaId, String direccion, String tipoSociedad, String telEmergencia, String inscripcion) {
@@ -136,11 +141,15 @@ public class EmpresaService {
 
     //APROBACIÓN RADICACIÓN FINAL (Fase 2 completa)
     @Transactional
-    public Empresa aprobarRadicacionFinal(Long solicitudId) {
+    public Empresa aprobarRadicacionFinal(Long solicitudId, byte[] archivoActa, String nombreArchivoActa) {
+        if (archivoActa == null || archivoActa.length == 0) {
+            throw new IllegalArgumentException("El archivo PDF del Acta de Radicación es obligatorio.");
+        }
+
         SolicitudRadicacion solicitud = solicitudRepository.findById(solicitudId)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada con ID: " + solicitudId));
 
-        // Instanciamos la empresa física que operará en el parque
+        //Instanciamos la empresa física que operará en el parque
         Empresa nuevaEmpresa = new Empresa();
         nuevaEmpresa.setRazonSocial(solicitud.getRazonSocialPretendida());
         nuevaEmpresa.setRepresentante(solicitud.getRepresentante());
@@ -148,6 +157,10 @@ public class EmpresaService {
         nuevaEmpresa.setTitulada(false);
         nuevaEmpresa.setEstadoEmpresa(EstadoEmpresa.RADICADA);
         nuevaEmpresa.setFechaRadicacion(LocalDate.now());
+
+        //Guardamos el acta de radicacion
+        nuevaEmpresa.setPdfActaRadicacion(archivoActa);
+        nuevaEmpresa.setNombreActaRadicacion(nombreArchivoActa);
 
         if (solicitud.getRepresentante() != null && solicitud.getRepresentante().getCuitPersonal() != null) {
             nuevaEmpresa.setCuit(solicitud.getRepresentante().getCuitPersonal());
@@ -160,7 +173,28 @@ public class EmpresaService {
         solicitud.setFechaResolucion(LocalDateTime.now());
         solicitudRepository.save(solicitud);
 
+
         return empresaRepository.save(nuevaEmpresa);
+    }
+
+    //DESADJUDICAR EMPRESA
+    @Transactional
+    public void desadjudicarEmpresa(Long empresaId, byte[] archivoActa, String nombreArchivoActa) {
+        if (archivoActa == null || archivoActa.length == 0) {
+            throw new IllegalArgumentException("El archivo PDF del Acta de Desadjudicación es obligatorio.");
+        }
+
+        Empresa empresa = empresaRepository.findById(empresaId)
+                .orElseThrow(() -> new RuntimeException("No se encontró la empresa con ID: " + empresaId));
+
+        //Cambiamos el estado operativo de la empresa
+        empresa.setEstadoEmpresa(EstadoEmpresa.DESADJUDICADA);
+
+        //Guardamos el acta de desadjudicación
+        empresa.setPdfActaDesadjudicacion(archivoActa);
+        empresa.setNombreActaDesadjudicacion(nombreArchivoActa);
+
+        empresaRepository.save(empresa);
     }
 
     @Transactional
