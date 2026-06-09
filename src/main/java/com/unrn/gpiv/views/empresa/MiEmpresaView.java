@@ -46,6 +46,40 @@ public class MiEmpresaView extends VerticalLayout {
         //RECUPERAR DATOS EMPRESA
         Empresa empresaData = empresaService.obtenerEmpresaPorRepresentante(logueado);
 
+        // --- CONTROL DE ALERTAS DE INFORMES ---
+        java.util.List<Long> alertasActivas = (java.util.List<Long>) VaadinSession.getCurrent().getAttribute("alertasInformes");
+
+        if (empresaData != null && alertasActivas != null && alertasActivas.contains(empresaData.getId())) {
+            HorizontalLayout bannerAlerta = new HorizontalLayout();
+            bannerAlerta.setWidthFull();
+            bannerAlerta.setAlignItems(Alignment.CENTER);
+            bannerAlerta.setJustifyContentMode(JustifyContentMode.BETWEEN);
+
+            bannerAlerta.getStyle()
+                    .set("background-color", "#FFF9E6")
+                    .set("color", "#8A6D3B")
+                    .set("padding", "16px 20px")
+                    .set("border-radius", "12px")
+                    .set("border", "1px solid #FCEFA1")
+                    .set("margin-bottom", "20px");
+
+            Span mensaje = new Span("⚠️ ATENCIÓN: El Administrador del Parque solicita que cargues los Informes de Avance faltantes a la brevedad.");
+            mensaje.getStyle().set("font-weight", "bold");
+
+            Button btnEntendido = new Button("Entendido", e -> {
+                bannerAlerta.setVisible(false); // Oculta el cartel visualmente
+
+                // Sacamos la ID de esta empresa de la lista global de la memoria para que no vuelva a saltar
+                alertasActivas.remove(empresaData.getId());
+                VaadinSession.getCurrent().setAttribute("alertasInformes", alertasActivas);
+            });
+            btnEntendido.addThemeVariants(ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_TERTIARY);
+
+            bannerAlerta.add(mensaje, btnEntendido);
+
+            addComponentAsFirst(bannerAlerta);
+        }
+
         //CONTROL ESTRICTO:
         //Si la empresa ya tiene dirección, o ya tiene tipo de sociedad, ya se da por registrada
         boolean yaRegistrada = (empresaData != null &&

@@ -126,7 +126,20 @@ public class AdminDashboardView extends VerticalLayout {
         // 2. Columnas vinculadas a los métodos del modelo
         grid.addColumn(r -> r.getItem().getNombre()).setHeader("Recurso");
         grid.addColumn(Recurso::getEstadoMovimiento).setHeader("Estado");
-        grid.addColumn(r -> r.getPrestadoA() != null ? r.getPrestadoA().getRazonSocial() : "En Pañol").setHeader("Poseedor");
+        grid.addColumn(r -> {
+            if (r.getPropietarioEmpresa() != null &&
+                    (r.getEstadoMovimiento() == EstadoMovimientoRecurso.DISPONIBLE || r.getEstadoMovimiento() == EstadoMovimientoRecurso.PAUSADO)) {
+
+                return r.getPropietarioEmpresa().getRazonSocial();
+            }
+
+            if (r.getPrestadoA() != null) {
+                return r.getPrestadoA().getRazonSocial() + " [En Uso]";
+            }
+
+            return "En Pañol";
+        }).setHeader("Poseedor").setSortable(true);
+//        grid.addColumn(r -> r.getPrestadoA() != null ? r.getPrestadoA().getRazonSocial() : "En Pañol").setHeader("Poseedor");
 
         // 3. Traer datos reales
         List<Recurso> activos = recursoService.obtenerTodoElInventario().stream()

@@ -260,7 +260,7 @@ public class MiProyectoView extends VerticalLayout {
             case EN_EVALUACION -> "El Directorio está analizando tu idea de proyecto. Ya no es posible modificarlo.";
             case PRE_APROBADO -> "¡Tu idea de proyecto pasó la Fase 1 con éxito! Por favor, completá los requisitos de la Fase 2 subiendo la documentación técnica requerida a continuación.";
             case DOCUMENTACION_ENVIADA -> "Tu documentación técnica ejecutiva ha sido enviada con éxito. Los ingenieros y asesores del parque industrial la están revisando formalmente.";
-            case APROBADA -> "¡Felicidades! Tu proyecto fue aprobado de forma definitiva. Ahora completá los datos finales de tu empresa para entrar en la cola de asignación de lotes.";
+            case APROBADA -> "¡Felicidades! Tu proyecto fue aprobado de forma definitiva. Ahora completá los datos finales de tu empresa."; //para entrar en la cola de asignación de lote. Te deja asignar un lote a una empresa sin haber llenado esos datos que faltan (despues hay que modificarlo con tiempo)
             case RECHAZADA -> "Tu solicitud ha sido rechazada. Por favor, revisá tu correo para ver las observaciones.";
         };
     }

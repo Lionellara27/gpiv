@@ -91,7 +91,26 @@ public class InventarioView extends VerticalLayout {
 
         grid.addComponentColumn(this::createEstadoBadge).setHeader("Estado Físico").setWidth("130px").setFlexGrow(0);
 
-        grid.addColumn(Recurso::getEstadoMovimiento).setHeader("Estado").setSortable(true).setWidth("120px").setFlexGrow(0);
+        grid.addComponentColumn(r -> {
+            if (r.getEstadoMovimiento() == null) {
+                return new Span("-");
+            }
+
+            String textoEstado = r.getEstadoMovimiento().name();
+            Span textoColor = new Span(textoEstado);
+            textoColor.getStyle().set("font-weight", "bold");
+
+            switch (r.getEstadoMovimiento()) {
+                case DISPONIBLE -> textoColor.getStyle().set("color", "#10b981");
+                case PRESTADO -> textoColor.getStyle().set("color", "#3b82f6");
+                case A_DEVOLVER -> textoColor.getStyle().set("color", "#f59e0b");
+                case EXTRAVIADO -> textoColor.getStyle().set("color", "#ef4444");
+                case PAUSADO -> textoColor.getStyle().set("color", "#6b7280");
+                default -> textoColor.getStyle().set("color", "var(--lumo-body-text-color)");
+            }
+
+            return textoColor;
+        }).setHeader("Estado").setSortable(true).setWidth("120px").setFlexGrow(0);
 
         grid.addColumn(r -> {
             if (r.getPropietarioEmpresa() != null &&
@@ -123,28 +142,35 @@ public class InventarioView extends VerticalLayout {
     }
 
     private Span createEstadoBadge(Recurso r) {
-        String estado = r.getEstadoMovimiento().name();
-        Span badge = new Span(estado);
+        if (r.getEstadoConservacion() == null) {
+            return new Span("-");
+        }
+
+        String estadoFisico = r.getEstadoConservacion().name();
+        Span badge = new Span(estadoFisico);
         badge.getStyle().set("padding", "3px 8px").set("border-radius", "12px")
                 .set("font-size", "0.85em").set("font-weight", "bold").set("color", "white");
 
-        switch (r.getEstadoMovimiento()) {
-            case DISPONIBLE -> badge.getStyle().set("background-color", "#10b981");
-            case PRESTADO -> badge.getStyle().set("background-color", "#3b82f6");
-            case A_DEVOLVER -> badge.getStyle().set("background-color", "#f59e0b");
-            case EXTRAVIADO -> badge.getStyle().set("background-color", "#ef4444");
+        switch (r.getEstadoConservacion()) {
+            case NUEVO -> badge.getStyle().set("background-color", "#10b981");
+            case GASTADO -> badge.getStyle().set("background-color", "#f59e0b");
+            case ROTO -> badge.getStyle().set("background-color", "#ef4444");
+            default -> badge.getStyle().set("background-color", "#6b7280");
         }
         return badge;
     }
 
     private HorizontalLayout createActionButtons(Recurso r) {
-        //boton de modificar
         Button btnEdit = new Button(VaadinIcon.PENCIL.create());
         btnEdit.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_TERTIARY);
         btnEdit.setTooltipText("Modificar estado/poseedor");
         btnEdit.addClickListener(e -> abrirEditorRecurso(r));
 
-        //logica del boton para elimianr!
+        if (r.getEstadoMovimiento() == EstadoMovimientoRecurso.PAUSADO) {
+            btnEdit.setEnabled(false);
+            btnEdit.setTooltipText("Bloqueado: Retirado de la oferta por la empresa dueña");
+        }
+
         Button btnDelete = new Button(VaadinIcon.TRASH.create());
         btnDelete.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_TERTIARY);
         btnDelete.setTooltipText("Eliminar Recurso");
@@ -171,7 +197,12 @@ public class InventarioView extends VerticalLayout {
             confirmDialog.open();
         });
 
-        return new HorizontalLayout(btnDelete, btnEdit);
+        HorizontalLayout acciones = new HorizontalLayout(btnDelete, btnEdit);
+        acciones.setSpacing(true);
+        acciones.getStyle().set("gap", "12px");
+        acciones.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.CENTER);
+
+        return acciones;
     }
 
     private void abrirFormularioNuevo() {

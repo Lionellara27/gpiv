@@ -229,8 +229,6 @@ public class Empresa {
         this.datosFinalesCompletos = datosFinalesCompletos;
     }
 
-
-
     //parte nueva para los avances
     // --- GETTERS Y SETTERS HU 4 ---
 

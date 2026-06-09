@@ -41,6 +41,7 @@ public class EmpresaDetalleView extends VerticalLayout implements HasUrlParamete
 	private Span badgeCondicion = new Span();
 	private Button btnTitular = new Button("Titular Empresa", VaadinIcon.DIPLOMA.create());
 	private Button btnDesadjudicar = new Button("Desadjudicar Empresa", VaadinIcon.TRASH.create());
+	private Button btnSolicitarInforme = new Button("Solicitar Informe de Avance", VaadinIcon.BELL.create()); // boton para la notificacion a la empresa
 
 	// Grids de Datos Reales
 	private Grid<Lote> gridLotes = new Grid<>(Lote.class, false);
@@ -95,6 +96,36 @@ public class EmpresaDetalleView extends VerticalLayout implements HasUrlParamete
 		btnDesadjudicar.getStyle().set("margin-left", "10px");
 		btnDesadjudicar.addClickListener(e -> abrirDialogoDesadjudicacion());
 		header.add(btnDesadjudicar);
+
+		// --- LOGICA DE NOTIFICACION POR SESIÓN ---
+		btnSolicitarInforme.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+		btnSolicitarInforme.getStyle()
+				.set("margin-left", "10px")
+				.set("background-color", "#FF8C00")
+				.set("color", "white")
+				.set("font-weight", "bold");
+
+		btnSolicitarInforme.addClickListener(e -> {
+			java.util.List<Long> empresasNotificadas = (java.util.List<Long>) com.vaadin.flow.server.VaadinSession.getCurrent().getAttribute("alertasInformes");
+
+			// Si es la primera vez, la lista va a ser null, entonces la creamos
+			if (empresasNotificadas == null) {
+				empresasNotificadas = new java.util.ArrayList<>();
+			}
+
+			// meto el ID de la empresa que el Admin está mirando en la lista (si no estaba ya)
+			if (!empresasNotificadas.contains(currentEmpresaId)) {
+				empresasNotificadas.add(currentEmpresaId);
+			}
+
+			// guardo la lista actualizada de nuevo en la sesion global
+			com.vaadin.flow.server.VaadinSession.getCurrent().setAttribute("alertasInformes", empresasNotificadas);
+
+			Notification.show("¡Notificación registrada en memoria para esta empresa!", 3000, Notification.Position.TOP_CENTER)
+					.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+		});
+
+		header.add(btnSolicitarInforme);
 
 		// --- 2. CUERPO: LOTES (IZQ) Y HERRAMIENTAS (DER) ---
 		HorizontalLayout cuerpo = new HorizontalLayout();
@@ -200,9 +231,11 @@ public class EmpresaDetalleView extends VerticalLayout implements HasUrlParamete
 			if (est == EstadoEmpresa.RADICADA) {
 				btnTitular.setVisible(true);
 				btnDesadjudicar.setVisible(true); // También permite desadjudicar si está RADICADA
+				btnSolicitarInforme.setVisible(true);
 			} else if (est == EstadoEmpresa.TITULADA) {
 				btnTitular.setVisible(false);
 				btnDesadjudicar.setVisible(true);
+				btnSolicitarInforme.setVisible(true);
 			} else {
 				btnTitular.setVisible(false);
 				btnDesadjudicar.setVisible(false);
