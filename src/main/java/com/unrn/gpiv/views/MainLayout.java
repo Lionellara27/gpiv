@@ -66,9 +66,8 @@ public class MainLayout extends AppLayout {
 
         if (usuario == null) return;
 
-        // =====================================================================
-        // 🛡️ SECCIÓN 1: ROL ADMINISTRADOR (ENREPAVI)
-        // =====================================================================
+
+        // 1: ROL ADMINISTRADOR (ENREPAVI)
         if (usuario.getRol() == Rol.ADMIN) {
             Span adminSection = new Span("ADMINISTRACIÓN");
             adminSection.addClassNames(LumoUtility.FontSize.SMALL, LumoUtility.TextColor.SECONDARY, LumoUtility.Margin.Top.MEDIUM);
@@ -84,9 +83,9 @@ public class MainLayout extends AppLayout {
             menu.add(crearLink(AdminEstadisticasView.class, VaadinIcon.PIE_CHART, " Estadísticas"));
         }
 
-        // =====================================================================
-        // 🏢 SECCIÓN 2: ROL EMPRESA (MENÚ DINÁMICO REACTIVO)
-        // =====================================================================
+
+        //  2: ROL EMPRESA (MENÚ DINÁMICO REACTIVO)
+
         if (usuario.getRol() == Rol.EMPRESA && usuario instanceof RepresentanteEmpresa logueado) {
 
             Span empresaSection = new Span("ADMINISTRACIÓN");
@@ -102,7 +101,7 @@ public class MainLayout extends AppLayout {
                     menu.add(crearLink(MiEmpresaView.class, VaadinIcon.BUILDING, " Mi Empresa"));
                 }
 
-                // 🚀 LA MAGIA PARA EL F5: Le pedimos a la BD la empresa actualizada SIEMPRE
+                //Le pedimos a la BD la empresa actualizada SIEMPRE
                 Empresa empresaFresca = empresaService.obtenerEmpresaPorRepresentante(logueado);
 
                 // Verificamos si la empresa fresca ya tiene lotes
@@ -120,11 +119,11 @@ public class MainLayout extends AppLayout {
                 }
             }
         }
-        // 🟢 ARREGLADO: El menú se agrega al contenedor lateral y cerramos el método limpiamente
+        // ARREGLADO: El menú se agrega al contenedor lateral y cerramos el método limpiamente
         addToDrawer(menu);
     }
 
-    // 🟢 ARREGLADO: El método auxiliar ahora queda perfectamente aislado a nivel de clase
+    // ARREGLADO: El método auxiliar ahora queda perfectamente aislado a nivel de clase
     private RouterLink crearLink(Class viewClass, VaadinIcon icon, String text) {
         RouterLink link = new RouterLink();
         link.setRoute(viewClass);

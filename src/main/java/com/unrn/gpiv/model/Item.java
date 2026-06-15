@@ -15,7 +15,6 @@ public class Item {
 
     private String descripcion; // "Herramienta de corte a explosión..."
 
-    // 🎯 LA CLAVE DE LA FLEXIBILIDAD: Se queda como String libre.
     // El administrador puede tipear "Herramienta", "Insumo", "Material" o lo que pinte.
     private String categoria;
 
@@ -28,7 +27,7 @@ public class Item {
         this.existencias = new java.util.ArrayList<>();
     }
 
-    // --- GETTERS Y SETTERS ---
+    // GETTERS Y SETTERS
 
     public Long getId() {
         return id;

@@ -60,7 +60,7 @@ public class EvaluarSolicitudesView extends VerticalLayout {
         card.setWidthFull();
         card.getStyle().set("background-color", "white").set("border-radius", "15px").set("padding", "2em");
 
-        // 🎯 AJUSTE DE TABS: Agregamos Fase 1 y Fase 2 explícitamente
+        // AJUSTE DE TABS: Agregamos Fase 1 y Fase 2 explícitamente
         Tab tabFase1 = new Tab("Fase 1: Ideas de Proyecto");
         Tab tabFase2 = new Tab("Fase 2: Documentación Ejecutiva");
         Tab tabAprobadas = new Tab("Aprobadas Finales");
@@ -117,7 +117,7 @@ public class EvaluarSolicitudesView extends VerticalLayout {
     private HorizontalLayout crearBotoneraAcciones(SolicitudRadicacion solicitud) {
         HorizontalLayout layout = new HorizontalLayout();
 
-        // --- BOTÓN DE VER DETALLES (El ojo) ---
+        // BOTÓN DE VER DETALLES (El ojo)
         Button btnVerDetalles = new Button(VaadinIcon.EYE.create());
         btnVerDetalles.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
 
@@ -131,7 +131,7 @@ public class EvaluarSolicitudesView extends VerticalLayout {
         });
         layout.add(btnVerDetalles);
 
-        // --- 🔥 SOLUCIÓN DEFINITIVA DESCARGA PDF FASE 1 ---
+        // -SOLUCIÓN DEFINITIVA DESCARGA PDF FASE 1
         if (solicitud.getProyecto() != null && solicitud.getProyecto().getPdfProyecto() != null) {
             String nombreArchivo = solicitud.getProyecto().getNombreArchivoPdf();
             if (nombreArchivo == null || nombreArchivo.isEmpty()) nombreArchivo = "proyecto.pdf";
@@ -154,7 +154,7 @@ public class EvaluarSolicitudesView extends VerticalLayout {
             layout.add(linkDescarga);
         }
 
-        // --- ACCIONES DINÁMICAS SEGÚN LA FASE ---
+        // ACCIONES DINÁMICAS SEGÚN LA FASE
         EstadoSolicitud est = solicitud.getEstado();
 
         // 1. Acciones para FASE 1 (Lleva a PRE_APROBADO)
@@ -188,7 +188,7 @@ public class EvaluarSolicitudesView extends VerticalLayout {
         // 2. Acciones para FASE 2 (Lleva a APROBACIÓN DEFINITIVA)
         if (est == EstadoSolicitud.DOCUMENTACION_ENVIADA) {
             Button btnAprobarFinal = new Button(VaadinIcon.CHECK_CIRCLE.create(), e -> {
-                // 🎯 En lugar de ejecutar directo, abrimos la ventana flotante obligatoria
+                // abrimos la ventana flotante obligatoria
                 abrirDialogoSubidaActa(solicitud);
             });
             btnAprobarFinal.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_SUCCESS);
@@ -210,8 +210,7 @@ public class EvaluarSolicitudesView extends VerticalLayout {
         var empresaOpt = empresaService.obtenerEmpresaPorRepresentante(solicitud.getRepresentante());
 
 
-        // NUEVA SECCIÓN: Agregar después de línea 189 (después de acciones DOCUMENTACION_ENVIADA)
-        // ✨ NUEVO: Botón para ASIGNAR LOTE y pasar a RADICADA
+        // NUEVA SECCIÓN: (después de acciones DOCUMENTACION_ENVIADA)
         if (est == EstadoSolicitud.APROBADA &&
                 solicitud.getRepresentante() != null &&
                 solicitud.getRazonSocialPretendida() != null &&
@@ -384,7 +383,7 @@ public class EvaluarSolicitudesView extends VerticalLayout {
                     new Paragraph(p.getImpactoAmbiental() != null ? p.getImpactoAmbiental() : "Sin descripción de impacto.")
             );
 
-            // 🎯 NUEVO: Descarga de Documentos Técnicos Fase 2 dentro de la ventana modal
+            // Descarga de Documentos Técnicos Fase 2 dentro de la ventana modal
             if (solicitud.getEstado() == EstadoSolicitud.DOCUMENTACION_ENVIADA || solicitud.getEstado() == EstadoSolicitud.APROBADA) {
                 VerticalLayout secAdjuntos = new VerticalLayout();
                 secAdjuntos.setPadding(false);

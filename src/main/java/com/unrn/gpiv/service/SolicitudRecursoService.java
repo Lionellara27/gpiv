@@ -41,7 +41,7 @@ public class SolicitudRecursoService {
 
         solicitudRepository.save(nuevaSolicitud);
 
-        // Aquí se dispararía la notificación interna o log para el Admin
+        // se dispararía la notificación interna o log para el Admin
         System.out.println("NOTIFICACIÓN ADMIN -> La empresa " + empresa.getRazonSocial() + " solicitó " + cantidad + "x " + item.getNombre());
     }
 

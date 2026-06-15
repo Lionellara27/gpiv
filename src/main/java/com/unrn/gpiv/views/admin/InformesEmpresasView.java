@@ -161,7 +161,7 @@ public class InformesEmpresasView extends VerticalLayout {
         sectionConsumos.setWidth("60%");
         sectionConsumos.getStyle().set("background-color", "white").set("border-radius", "15px").set("padding", "1.5em");
 
-        // 🚀 Barra de Navegación de Año (Rescatada de Master!)
+        // Barra de Navegación de Año
         HorizontalLayout navAnio = new HorizontalLayout();
         navAnio.setWidthFull();
         navAnio.setJustifyContentMode(JustifyContentMode.BETWEEN);
@@ -179,7 +179,7 @@ public class InformesEmpresasView extends VerticalLayout {
         gridConsumos.addColumn(c -> c.getConsumoAgua() != null ? c.getConsumoAgua() + " Lts" : "-").setHeader("Agua");
         gridConsumos.addColumn(c -> c.getConsumoGas() != null ? c.getConsumoGas() + " m³" : "-").setHeader("Gas");
 
-        // 🚀 Fila de Totales abajo del todo (FooterRow)
+        // Fila de Totales abajo del todo (FooterRow)
         footerRowConsumos = gridConsumos.appendFooterRow();
 
         otrosServiciosLayout.setSpacing(true);
@@ -361,7 +361,7 @@ public class InformesEmpresasView extends VerticalLayout {
 
         gridConsumos.setItems(consumosDelAnio);
 
-        // 🚀 Cálculo matemático de la fila de Totales
+        // Cálculo matemático de la fila de Totales
         double totalLuz = 0;
         double totalAgua = 0;
         double totalGas = 0;

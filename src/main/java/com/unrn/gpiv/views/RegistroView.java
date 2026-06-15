@@ -31,7 +31,7 @@ public class RegistroView extends VerticalLayout {
     private Binder<RepresentanteEmpresa> binder = new Binder<>(RepresentanteEmpresa.class);
 
     public RegistroView(@Autowired EmpresaService empresaService) {
-        // --- CONFIGURACIÓN DE PANTALLA ---
+        //CONFIGURACIÓN DE PANTALLA ---
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         getStyle().set("overflow-y", "auto");
@@ -39,7 +39,7 @@ public class RegistroView extends VerticalLayout {
 
         configurarValidaciones();
 
-        // --- TARJETA DE REGISTRO ---
+        //TARJETA DE REGISTRO ---
         VerticalLayout registroCard = new VerticalLayout();
         registroCard.setWidth("500px");
         registroCard.getStyle().set("background-color", "white");
@@ -49,7 +49,7 @@ public class RegistroView extends VerticalLayout {
         registroCard.getStyle().set("margin", "3em 0");
         registroCard.setAlignItems(Alignment.STRETCH);
 
-        // --- DISEÑO Y TÍTULOS ---
+        //DISEÑO Y TÍTULOS ---
         Image logo = new Image("images/logo-parque.png", "Logo");
         logo.setHeight("70px");
         logo.getStyle().set("margin", "0 auto");
@@ -79,7 +79,7 @@ public class RegistroView extends VerticalLayout {
         txtDni.setPlaceholder("Sin puntos");
         txtCuit.setPlaceholder("Sin guiones");
 
-        // --- BOTÓN CON LÓGICA MEJORADA ---
+        //BOTÓN CON LÓGICA MEJORADA ---
         Button btnCrearCuenta = new Button("CREAR CUENTA Y CONTINUAR");
         btnCrearCuenta.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         btnCrearCuenta.getStyle().set("background-color", "#009A3B");
@@ -89,7 +89,7 @@ public class RegistroView extends VerticalLayout {
             RepresentanteEmpresa nuevoRep = new RepresentanteEmpresa();
 
             if (binder.writeBeanIfValid(nuevoRep)) {
-                // REGLA DE ORO: El username es el email
+                // El username es el email
                 nuevoRep.setUsername(nuevoRep.getEmail());
 
                 try {

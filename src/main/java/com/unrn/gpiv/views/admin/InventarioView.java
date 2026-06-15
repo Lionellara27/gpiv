@@ -334,13 +334,13 @@ public class InventarioView extends VerticalLayout {
 
         VerticalLayout layout = new VerticalLayout();
 
-        // 1. Combo de estados (En uso, Disponible, etc.)
+        //Combo de estados (En uso, Disponible, etc.)
         ComboBox<EstadoMovimientoRecurso> estadoCombo = new ComboBox<>("Estado Actual");
         estadoCombo.setItems(EstadoMovimientoRecurso.values());
         estadoCombo.setValue(r.getEstadoMovimiento());
         estadoCombo.setWidthFull();
 
-        // 2. Combo de Empresas (quién lo tiene ahora)
+        //Combo de Empresas (quién lo tiene ahora)
         ComboBox<Empresa> empresaCombo = new ComboBox<>("Prestado a / Poseedor");
         // Asumo que tenés un empresaService para listar las empresas
         empresaCombo.setItems(this.empresaService.obtenerTodasLasEmpresas());
@@ -348,7 +348,7 @@ public class InventarioView extends VerticalLayout {
         empresaCombo.setValue(r.getPrestadoA());
         empresaCombo.setWidthFull();
 
-        // 🎯 Lógica inteligente: Ocultamos el campo "Empresa" si está disponible
+        // Ocultamos el campo "Empresa" si está disponible
         empresaCombo.setVisible(r.getEstadoMovimiento() == EstadoMovimientoRecurso.PRESTADO ||
                 r.getEstadoMovimiento() == EstadoMovimientoRecurso.A_DEVOLVER);
 

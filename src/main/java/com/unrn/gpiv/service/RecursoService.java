@@ -19,7 +19,7 @@ public class RecursoService {
         this.recursoRepository = recursoRepository;
     }
 
-    // --- MÉTODOS DE LECTURA (Buscadores para la Grilla) ---
+    // MÉTODOS DE LECTURA (Buscadores para la Grilla)
 
     public List<Recurso> obtenerTodoElInventario() {
         return recursoRepository.findAll();
@@ -34,7 +34,7 @@ public class RecursoService {
         return recursoRepository.findByItemCategoriaContainingIgnoreCase(categoria);
     }
 
-    // --- 📊 MÉTODOS PARA EL DASHBOARD (Números 100% Reales) ---
+    // 📊 MÉTODOS PARA EL DASHBOARD (Números 10000% Real)
 
     public long obtenerCantidadPrestados() {
         return recursoRepository.countByEstadoMovimiento(EstadoMovimientoRecurso.PRESTADO) + recursoRepository.countByEstadoMovimiento(EstadoMovimientoRecurso.A_DEVOLVER);
@@ -44,9 +44,9 @@ public class RecursoService {
         return recursoRepository.countByEstadoMovimiento(EstadoMovimientoRecurso.A_DEVOLVER);
     }
 
-    // --- MÉTODOS DE ESCRITURA (Lógica transaccional de control) ---
+    // MÉTODOS DE ESCRITURA (Lógica transaccional de control)
 
-    // 🎯 EL MÉTODO QUE FALTABA: Guarda las altas nuevas que vienen desde el Modal de Vaadin
+    // Guarda las altas nuevas que vienen desde el Modal de Vaadin
     @Transactional
     public void guardarRecurso(Recurso recurso) {
         recursoRepository.save(recurso);

@@ -32,7 +32,7 @@ public class LoginView extends VerticalLayout {
         setJustifyContentMode(JustifyContentMode.CENTER);
         getStyle().set("background-color", "#f5f7fa");
 
-        // --- TARJETA DE LOGIN (Mantenemos tu estilo que está flama) ---
+        //TARJETA DE LOGIN ---
         VerticalLayout loginCard = new VerticalLayout();
         loginCard.setWidth("400px");
         loginCard.getStyle().set("background-color", "white").set("padding", "2.5em")
@@ -63,21 +63,21 @@ public class LoginView extends VerticalLayout {
         btnIngresar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         btnIngresar.getStyle().set("background-color", "#009A3B").set("font-weight", "bold");
 
-        // --- LÓGICA DE INGRESO REAL ---
+        //LÓGICA DE INGRESO REAL ---
         btnIngresar.addClickListener(e -> {
             String email = txtUsuario.getValue().trim();
             String pass = txtPassword.getValue();
 
             try {
-                // 1. IMPORTANTE: Usamos la clase padre 'Usuario' para que acepte Admin o Empresa
+                // Usamos la clase padre 'Usuario' para que acepte Admin o Empresa
                 // Y llamamos al nuevo método 'loginGeneral' que busca en toda la tabla
                 Usuario usuario = empresaService.loginGeneral(email, pass);
 
                 if (usuario != null) {
-                    // 2. Guardamos el objeto en la sesión (Vaadin se encarga de saber qué hijo es)
+                    //Guardamos el objeto en la sesión (Vaadin se encarga de saber qué hijo es)
                     VaadinSession.getCurrent().setAttribute("usuarioLogueado", usuario);
 
-                    // 3. Redirigimos según el Rol (Tu lógica que ya estaba impecable)
+                    // Redirigimos según el Rol (Tu lógica que ya estaba impecable)
                     if (usuario.getRol() == Rol.ADMIN) {
                         getUI().ifPresent(ui -> ui.navigate("admin/dashboard"));
                     } else {
@@ -92,7 +92,7 @@ public class LoginView extends VerticalLayout {
             }
         });
 
-        // --- LINKS INFERIORES ---
+        //LINKS INFERIORES ---
         VerticalLayout linksLayout = new VerticalLayout();
         linksLayout.setAlignItems(Alignment.CENTER);
         Button btnRegistro = new Button("Registrate y solicitá un lote", ev -> getUI().ifPresent(ui -> ui.navigate("registro")));

@@ -34,8 +34,6 @@ public class EmpresaService {
     private UsuarioRepository usuarioRepository;
 //parte para contadores
 
-    // Tu EmpresaService debería quedar solo con esto:
-
     @Transactional
     public RepresentanteEmpresa registrarRepresentante(RepresentanteEmpresa rep) {
         if (usuarioRepository.existsByEmail(rep.getEmail())) {

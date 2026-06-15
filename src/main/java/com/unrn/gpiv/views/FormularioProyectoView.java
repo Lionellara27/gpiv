@@ -47,7 +47,7 @@ public class FormularioProyectoView extends VerticalLayout implements HasUrlPara
     // Binder para ProyectoProductivo
     private Binder<ProyectoProductivo> binder = new Binder<>(ProyectoProductivo.class);
 
-    // 🎯 VARIABLES TEMPORALES PARA ATRAPAR EL PDF EN EL AIRE (NUEVO)
+    // VARIABLES TEMPORALES PARA ATRAPAR EL PDF EN EL AIRE (NUEVO)
     private byte[] pdfBytesTemporal = null;
     private String pdfNombreTemporal = null;
 
@@ -66,7 +66,7 @@ public class FormularioProyectoView extends VerticalLayout implements HasUrlPara
         getStyle().set("overflow-y", "auto");
         getStyle().set("background-color", "#f5f7fa");
 
-        // 🚀 ACÁ LLAMAMOS A TU MÉTODO PARA QUE LOS CAMPOS NO QUEDEN NULL
+        // ACÁ LLAMAMOS A TU MÉTODO PARA QUE LOS CAMPOS NO QUEDEN NULL
         configurarValidaciones();
 
         // Limitamos a que solo puedan subir PDFs
@@ -178,10 +178,9 @@ public class FormularioProyectoView extends VerticalLayout implements HasUrlPara
 
             ProyectoProductivo proyecto = esEdicion ? solicitudExistente.getProyecto() : new ProyectoProductivo();
 
-            // Si pasa las validaciones de tu método configurarValidaciones...
             if (binder.writeBeanIfValid(proyecto)) {
 
-                // 🚀 Usamos las variables temporales que atraparon el PDF real
+                // Usamos las variables temporales que atraparon el PDF real
                 if (pdfBytesTemporal != null && pdfNombreTemporal != null) {
                     proyecto.setPdfProyecto(pdfBytesTemporal);
                     proyecto.setNombreArchivoPdf(pdfNombreTemporal);
@@ -213,7 +212,6 @@ public class FormularioProyectoView extends VerticalLayout implements HasUrlPara
         }
     }
 
-    // 🚀 TU MÉTODO ORIGINAL AL FINAL DE LA CLASE (INTACTO)
     private void configurarValidaciones() {
         binder.forField(txtNombreProyecto).asRequired("El nombre es obligatorio").bind(ProyectoProductivo::getNombreProyecto, ProyectoProductivo::setNombreProyecto);
         binder.forField(txtActividad).asRequired("Obligatorio").bind(ProyectoProductivo::getActividadPrincipal, ProyectoProductivo::setActividadPrincipal);

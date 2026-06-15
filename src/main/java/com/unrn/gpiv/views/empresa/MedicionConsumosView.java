@@ -39,7 +39,7 @@ public class MedicionConsumosView extends VerticalLayout {
 
         H3 titulo = new H3("Declaración de Consumos Mensuales");
 
-        // 🚀 LÓGICA DE NEGOCIO: Bloquear lo que no pidieron en el proyecto
+        //  Bloquear lo que no pidieron en el proyecto
         if (empresaActual.getProyecto() != null && empresaActual.getProyecto().getServiciosNecesarios() != null) {
             Set<TipoServicio> servicios = empresaActual.getProyecto().getServiciosNecesarios();
 

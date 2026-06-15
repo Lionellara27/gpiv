@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Entity
 @DiscriminatorValue("REPRESENTANTE")
-@Getter @Setter // 🟢 Lombok genera automáticamente todos los getters y setters por atrás
+@Getter @Setter //
 public class RepresentanteEmpresa extends Usuario {
 
     // Datos Personales del Humano que maneja la cuenta
@@ -17,7 +17,7 @@ public class RepresentanteEmpresa extends Usuario {
     private String telefono;
     private String emailContacto;
 
-    // 🎯 NUEVOS: Los campos obligatorios que el tipo carga en el SignUp original
+    // Los campos obligatorios que el tipo carga en el SignUp original
     private String razonSocialInicial;
     private String cuitEmpresaInicial;
 

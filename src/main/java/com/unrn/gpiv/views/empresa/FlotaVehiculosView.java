@@ -63,7 +63,7 @@ public class FlotaVehiculosView extends VerticalLayout {
             return;
         }
 
-        // 1. RECARGAMOS LA EMPRESA FRESCA (Anti-clonación)
+        // (Anti-clonación)
         this.empresaActual = empresaService.obtenerEmpresaPorRepresentante(empresaActual.getRepresentante());
 
         Vehiculo nuevoVehiculo = new Vehiculo();

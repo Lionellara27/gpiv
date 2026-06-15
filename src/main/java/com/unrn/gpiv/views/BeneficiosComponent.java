@@ -63,7 +63,7 @@ public class BeneficiosComponent extends HorizontalLayout {
         colDerecha.setPadding(false);
         colDerecha.getStyle().set("margin-left", "40px");
 
-        // 🎯 Cargamos la foto que vas a meter en src/main/resources/META-INF/resources/images/beneficios.webp
+        // Cargamos la foto que vas a meter en src/main/resources/META-INF/resources/images/beneficios.webp
         Image fotoBeneficios = new Image("images/foto-parqueIndustrial.webp", "Predio Productivo Viedma");
         fotoBeneficios.setWidth("100%");
 

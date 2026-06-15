@@ -25,7 +25,7 @@ public class HistorialAvancesView extends VerticalLayout {
     private final EmpresaService empresaService;
     private Empresa empresaActual;
 
-    // --- CAMPOS DEL FORMULARIO ---
+    //CAMPOS DEL FORMULARIO ---
     private TextField txtTitulo = new TextField("Título del Avance (Ej: Techado Galpón)");
     private DatePicker dateFecha = new DatePicker("Fecha de la Novedad");
     private TextArea txtDescripcion = new TextArea("Descripción / Detalles de la obra");
@@ -40,7 +40,7 @@ public class HistorialAvancesView extends VerticalLayout {
     private byte[] pdfBytesTemporal;
     private String nombreArchivoTemporal;
 
-    // --- GRILLA PARA VER EL HISTORIAL ---
+    //GRILLA PARA VER EL HISTORIAL ---
     private Grid<InformeAvance> gridAvances = new Grid<>(InformeAvance.class, false);
 
     public HistorialAvancesView(Empresa empresaActual, EmpresaService empresaService) {
@@ -112,7 +112,7 @@ public class HistorialAvancesView extends VerticalLayout {
             return;
         }
 
-        // DESPERTADOR: Recargamos versión fresca
+        //Recargamos versión fresca
         this.empresaActual = empresaService.obtenerEmpresaPorRepresentante(empresaActual.getRepresentante());
 
         InformeAvance nuevoAvance = new InformeAvance();

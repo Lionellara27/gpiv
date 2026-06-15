@@ -19,7 +19,7 @@ public class InformeAvance {
     @Column(columnDefinition = "TEXT") // Para que no se corte el texto en la DB
     private String observaciones;
 
-    // -estado_cumplimiento (Usando el Enum que ya tenés)
+    // -estado_cumplimiento
     @Enumerated(EnumType.STRING)
     private EstadoCumplimiento estadoCumplimiento;
 
@@ -43,7 +43,7 @@ public class InformeAvance {
     // Constructor vacío (obligatorio)
     public InformeAvance() {}
 
-    // --- CAMPOS NUEVOS PARA LA HU 4 ---
+    //CAMPOS NUEVOS PARA LA HU 4
     private String titulo; // Ej: "Finalización de cerramiento perimetral"
 
     @Lob // Para guardar el PDF en la base de datos

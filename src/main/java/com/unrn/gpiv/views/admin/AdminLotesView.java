@@ -45,7 +45,7 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
     private TextField ubicacion = new TextField("Ubicación");
     private TextArea caracteristicas = new TextArea("Características");
 
-    // ✅ CAMBIO: De ComboBox a Span (solo lectura, no editable)
+    //  De ComboBox a Span (solo lectura, no editable)
     private Span empresaAsignada = new Span();
 
     private ComboBox<EstadoLote> filtroEstado = new ComboBox<>("Filtrar por Estado", EstadoLote.values());
@@ -54,7 +54,7 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
     private Button cancelar = new Button("Cancelar");
     private Button editar = new Button("Editar Lote");
     private Button eliminar = new Button("Eliminar Lote");
-    // ✅ CAMBIO: REMOVER botón desasignar - desadjudicación se hace desde EmpresaDetalleView
+    // REMOVER botón desasignar - desadjudicación se hace desde EmpresaDetalleView
 
     private VerticalLayout panelEdicion;
 
@@ -104,7 +104,7 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
 
     private VerticalLayout formularioDeEdicionLote() {
         FormLayout formLayout = new FormLayout();
-        // ✅ CAMBIO: No agregar empresaAsignada al formulario - solo lectura
+        //No agregar empresaAsignada al formulario - solo lectura
         formLayout.add(manzana, nroLote, ubicacion, superficie, estado, caracteristicas);
         formLayout.setColspan(caracteristicas, 2);
 
@@ -123,11 +123,11 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
         eliminar.addThemeVariants(ButtonVariant.LUMO_ERROR);
         eliminar.addClickListener(event -> accionEliminar());
 
-        // ✅ CAMBIO: Solo mostrar botones Editar y Eliminar
+        // Solo mostrar botones Editar y Eliminar
         HorizontalLayout accionesPrincipales = new HorizontalLayout(editar, eliminar);
         HorizontalLayout barraGuardado = new HorizontalLayout(guardar, cancelar);
 
-        // ✅ NUEVA SECCIÓN: Información sobre empresa asignada
+        // Información sobre empresa asignada
         H3 tituloEmpresa = new H3("Empresa Asignada");
         VerticalLayout infoEmpresa = new VerticalLayout(tituloEmpresa, empresaAsignada);
         infoEmpresa.setPadding(false);
@@ -209,12 +209,12 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
             limpiarFormulario();
         } else {
             binder.setBean(lote);
-            // ✅ CAMBIO: Ya no cargamos empresas ni permitimos seleccionar
+            //  Ya no cargamos empresas ni permitimos seleccionar
 
             // Bloqueamos los atributos estructurales por defecto al seleccionar de la tabla
             activarModoEdicion(false);
 
-            // ✅ CAMBIO: Mostrar información de empresa asignada (solo lectura)
+            //Mostrar información de empresa asignada (solo lectura)
             if (lote.getEmpresa() != null) {
                 empresaAsignada.setText("Empresa: " + lote.getEmpresa().getRazonSocial() + " (Adjudicado)");
                 empresaAsignada.getStyle().set("color", "var(--color-text-info)");
@@ -230,7 +230,7 @@ public class AdminLotesView extends VerticalLayout implements BeforeEnterObserve
                 editar.setTooltipText("Editar propiedades del lote");
             }
 
-            // ✅ CAMBIO: Botones guardar y desasignar SIEMPRE ocultos
+            // Botones guardar y desasignar SIEMPRE ocultos
             guardar.setVisible(false);
             cancelar.setVisible(true);
             // desasignar eliminado - se hace desde EmpresaDetalleView

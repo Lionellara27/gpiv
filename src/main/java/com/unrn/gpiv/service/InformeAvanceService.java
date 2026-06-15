@@ -23,7 +23,7 @@ public class InformeAvanceService {
         // Obtenemos el último día del mes actual (ej: 2026-06-30)
         LocalDate finMes = LocalDate.now().with(TemporalAdjusters.lastDayOfMonth());
 
-        // ¡Ahora sí! Completamos la consulta con las fechas reales
+        // Ahora sí Completamos la consulta con las fechas reales
         return informeRepository.findByFechaEvaluacionBetween(inicioMes, finMes);
     }
 }

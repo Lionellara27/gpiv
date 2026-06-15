@@ -25,7 +25,7 @@ public class HistorialDashboardView extends VerticalLayout {
         contenedorTarjetas.setWidthFull();
         contenedorTarjetas.setSpacing(true);
 
-        // --- TARJETA 1: HISTORIAL DE RADICACIONES ---
+        //TARJETA 1: HISTORIAL DE RADICACIONES
         VerticalLayout cardRadicaciones = new VerticalLayout();
         cardRadicaciones.setWidth("300px");
         cardRadicaciones.getStyle()
@@ -45,7 +45,7 @@ public class HistorialDashboardView extends VerticalLayout {
         cardRadicaciones.add(tituloCard, descCard, btnAcceder);
         contenedorTarjetas.add(cardRadicaciones);
 
-        // --- FUTURAS TARJETAS AQUÍ ---
+        // FUTURAS TARJETAS AQUÍ
         // Podés clonar el bloque de arriba en el futuro para "Historial de Pagos", etc.
 
         add(contenedorTarjetas);

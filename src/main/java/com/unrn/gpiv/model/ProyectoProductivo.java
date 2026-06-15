@@ -19,7 +19,7 @@ public class ProyectoProductivo {
     @Column(nullable = false)
     private String nombreProyecto;
 
-    // --- NUEVO: Lo que agregamos para el formulario ---
+    // NUEVO: Lo que agregamos para el formulario
     @Column(nullable = false)
     private String superficieRequerida;
 
@@ -57,7 +57,7 @@ public class ProyectoProductivo {
     private String nombreAdjunto3;
     //--------------------------------
 
-    // --- MODIFICADO: De Enum simple a Lista de Enums (para los Checkbox) ---
+    //  MODIFICADO: De Enum simple a Lista de Enums (para los Checkbox)
     @ElementCollection(targetClass = TipoServicio.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "proyecto_servicios", joinColumns = @JoinColumn(name = "proyecto_id"))
     @Enumerated(EnumType.STRING)

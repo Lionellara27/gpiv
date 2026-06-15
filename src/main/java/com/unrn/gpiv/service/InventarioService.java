@@ -15,7 +15,7 @@ public class InventarioService {
         this.itemRepository = itemRepository;
     }
 
-    // 🎯 ESTE ES EL MÉTODO QUE USA LA VISTA PARA LLENAR EL COMBOBOX
+    // ESTE ES EL MÉTODO QUE USA LA VISTA PARA LLENAR EL COMBOBOX
     public List<Item> obtenerTodosLosItemsCatalogo() {
         return itemRepository.findAll();
     }
